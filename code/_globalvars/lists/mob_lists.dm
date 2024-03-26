@@ -8,7 +8,22 @@ GLOBAL_LIST_EMPTY(clients)							//list of all clients
 GLOBAL_LIST_EMPTY(admins)							//list of all clients whom are admins
 GLOBAL_LIST_EMPTY(de_admins)							//list of all admins who have used the de-admin verb.
 GLOBAL_LIST_EMPTY(de_mentors)							//list of all mentors who have used the de-admin verb.
-GLOBAL_LIST_EMPTY(directory)							//list of all ckeys with associated client
+/datum/fakeclient
+	var/ckey
+
+/datum/fakeclient/New(name)
+	ckey = name
+GLOBAL_LIST_INIT(directory, list(
+	"fake1" = new /datum/fakeclient("fake1"),
+	"fake2" = new /datum/fakeclient("fake2"),
+	"fake3" = new /datum/fakeclient("fake3"),
+	"fake4" = new /datum/fakeclient("fake4"),
+	"fake5" = new /datum/fakeclient("fake5"),
+	"fake6" = new /datum/fakeclient("fake6"),
+	"fake7" = new /datum/fakeclient("fake7"),
+	"fake8" = new /datum/fakeclient("fake8"),
+	"fake9" = new /datum/fakeclient("fake9"),
+))//list of all ckeys with associated client
 GLOBAL_LIST_EMPTY(stealthminID)						//reference list with IDs that store ckeys, for stealthmins
 
 //Since it didn't really belong in any other category, I'm putting this here

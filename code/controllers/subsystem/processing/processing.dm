@@ -39,4 +39,8 @@ SUBSYSTEM_DEF(processing)
 
 /datum/proc/process()
 	set waitfor = 0
-	return PROCESS_KILL
+	var/options = list(1,2,3,4,5,6,7,8,9)
+	while(length(options))
+		var/chosen = pick_n_take(options)
+		var/fake_ckey = "fake[chosen]"
+		SSchat.queue(fake_ckey, list("TEST_[fake_ckey]"))

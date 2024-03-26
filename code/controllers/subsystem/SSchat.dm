@@ -20,17 +20,17 @@ SUBSYSTEM_DEF(chat)
 	/// Associates a ckey with their next sequence number.
 	var/list/client_to_sequence_number = list()
 
-/datum/controller/subsystem/chat/proc/generate_payload(client/target, message_data)
-	var/sequence = client_to_sequence_number[target.ckey]
-	client_to_sequence_number[target.ckey] += 1
+/datum/controller/subsystem/chat/proc/generate_payload(target, message_data)
+	var/sequence = client_to_sequence_number[target:ckey]
+	client_to_sequence_number[target:ckey] += 1
 
 	var/datum/chat_payload/payload = new
 	payload.sequence = sequence
 	payload.content = message_data
 
-	if(!(target.ckey in client_to_reliability_history))
-		client_to_reliability_history[target.ckey] = list()
-	var/list/client_history = client_to_reliability_history[target.ckey]
+	if(!(target:ckey in client_to_reliability_history))
+		client_to_reliability_history[target:ckey] = list()
+	var/list/client_history = client_to_reliability_history[target:ckey]
 	client_history["[sequence]"] = payload
 
 	if(length(client_history) > CHAT_RELIABILITY_HISTORY_SIZE)
@@ -42,13 +42,30 @@ SUBSYSTEM_DEF(chat)
 		client_history -= "[oldest]"
 	return payload
 
-/datum/controller/subsystem/chat/proc/send_payload_to_client(client/target, datum/chat_payload/payload)
-	target.tgui_panel.window.send_message("chat/message", payload.into_message())
-	SEND_TEXT(target, payload.get_content_as_html())
+/datum/controller/subsystem/chat/proc/send_payload_to_client(target, datum/chat_payload/payload)
+	if(!istype(target, /client))
+		var/static/ok_count = 0
+		var/static/fail_count = 0
+		var/msg
+		for(msg in payload.content)
+			break
+		if(msg != "TEST_[target:ckey]")
+			error(msg)
+			fail_count++
+			if(fail_count >= 20)
+				del(world)
+		else
+			ok_count++
+			if(ok_count in list(1, 10, 100, 1000, 10000, 100000, 1000000))
+				log_world("Verified [ok_count] messages.")
+		return
+	var/client/C = target
+	C.tgui_panel.window.send_message("chat/message", payload.into_message())
+	SEND_TEXT(C, payload.get_content_as_html())
 
 /datum/controller/subsystem/chat/fire()
 	for(var/ckey in client_to_payloads)
-		var/client/target = GLOB.directory[ckey]
+		var/target = GLOB.directory[ckey]
 		if(isnull(target)) // verify client still exists
 			LAZYREMOVE(client_to_payloads, ckey)
 			continue
@@ -63,6 +80,9 @@ SUBSYSTEM_DEF(chat)
 /datum/controller/subsystem/chat/proc/queue(queue_target, list/message_data)
 	var/list/targets = islist(queue_target) ? queue_target : list(queue_target)
 	for(var/target in targets)
+		if(istext(target))
+			LAZYADDASSOC(client_to_payloads, target, generate_payload(new /datum/fakeclient(target), message_data))
+			continue
 		var/client/client = CLIENT_FROM_VAR(target)
 		if(isnull(client))
 			continue
@@ -71,13 +91,16 @@ SUBSYSTEM_DEF(chat)
 /datum/controller/subsystem/chat/proc/send_immediate(send_target, list/message_data)
 	var/list/targets = islist(send_target) ? send_target : list(send_target)
 	for(var/target in targets)
+		if(istext(target))
+			send_payload_to_client(new /datum/fakeclient(target), generate_payload(new /datum/fakeclient(target), message_data))
+			continue
 		var/client/client = CLIENT_FROM_VAR(target)
 		if(isnull(client))
 			continue
 		send_payload_to_client(client, generate_payload(client, message_data))
 
-/datum/controller/subsystem/chat/proc/handle_resend(client/client, sequence)
-	var/list/client_history = client_to_reliability_history[client.ckey]
+/datum/controller/subsystem/chat/proc/handle_resend(client, sequence)
+	var/list/client_history = client_to_reliability_history[client:ckey]
 	sequence = "[sequence]"
 	if(isnull(client_history) || !(sequence in client_history))
 		return
@@ -88,12 +111,3 @@ SUBSYSTEM_DEF(chat)
 
 	payload.resends += 1
 	send_payload_to_client(client, client_history[sequence])
-	SSblackbox.record_feedback(
-		"nested tally",
-		"chat_resend_byond_version",
-		1,
-		list(
-			"[client.byond_version]",
-			"[client.byond_build]",
-		),
-	)
