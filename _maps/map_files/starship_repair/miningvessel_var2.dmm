@@ -33,7 +33,7 @@
 	d2 = 2;
 	icon_state = "1-2"
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "cH" = (
 /obj/effect/landmark/burnturf,
@@ -247,7 +247,7 @@
 /obj/structure/railing{
 	dir = 9
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "nI" = (
 /turf/space,
@@ -295,7 +295,7 @@
 "qN" = (
 /obj/structure/rack,
 /obj/item/clothing/mask/gas/explorer,
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "rJ" = (
 /obj/structure/shuttle/engine/heater{
@@ -343,7 +343,7 @@
 /obj/structure/railing{
 	dir = 8
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "uJ" = (
 /obj/effect/decal/cleanable/ash,
@@ -405,7 +405,7 @@
 	d2 = 2;
 	icon_state = "1-2"
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "AK" = (
 /obj/structure/bed,
@@ -672,7 +672,7 @@
 	d2 = 2;
 	icon_state = "1-2"
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "My" = (
 /obj/structure/table,
@@ -760,7 +760,7 @@
 /area/space)
 "RW" = (
 /obj/structure/table,
-/turf/simulated/floor/engine,
+/turf/simulated/floor/engine/airless,
 /area/space)
 "Sq" = (
 /turf/simulated/floor/plasteel/airless,
@@ -784,7 +784,7 @@
 /turf/simulated/floor/engine/airless,
 /area/space)
 "TI" = (
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "TQ" = (
 /obj/structure/window/reinforced{

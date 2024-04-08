@@ -10,7 +10,7 @@
 /area/space)
 "bg" = (
 /obj/effect/turf_decal/stripes/line,
-/turf/simulated/floor/engine,
+/turf/simulated/floor/engine/airless,
 /area/space)
 "cb" = (
 /obj/effect/turf_decal/box,
@@ -34,7 +34,7 @@
 	d2 = 2;
 	icon_state = "1-2"
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "cH" = (
 /obj/machinery/atmospherics/pipe/simple/hidden,
@@ -64,7 +64,7 @@
 /obj/structure/chair/comfy/shuttle{
 	dir = 1
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "fg" = (
 /obj/effect/turf_decal/delivery/partial,
@@ -89,13 +89,13 @@
 /obj/effect/turf_decal/stripes/line{
 	dir = 1
 	},
-/turf/simulated/floor/engine,
+/turf/simulated/floor/engine/airless,
 /area/space)
 "fU" = (
 /obj/effect/turf_decal/stripes/line{
 	dir = 6
 	},
-/turf/simulated/floor/engine,
+/turf/simulated/floor/engine/airless,
 /area/space)
 "gf" = (
 /turf/simulated/floor/plasteel{
@@ -105,7 +105,7 @@
 /area/space)
 "gg" = (
 /obj/machinery/power/smes,
-/turf/simulated/floor/engine,
+/turf/simulated/floor/engine/airless,
 /area/space)
 "hx" = (
 /obj/effect/turf_decal/stripes/white/line{
@@ -114,7 +114,7 @@
 /obj/machinery/atmospherics/pipe/simple/hidden{
 	dir = 6
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "hY" = (
 /obj/machinery/door/airlock/multi_tile/glass{
@@ -128,7 +128,7 @@
 	d2 = 8;
 	icon_state = "4-8"
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "ie" = (
 /obj/structure/cable{
@@ -148,19 +148,19 @@
 	d2 = 8;
 	icon_state = "2-8"
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "iW" = (
 /obj/machinery/atmospherics/pipe/simple/hidden{
 	dir = 8
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "ji" = (
 /obj/machinery/atmospherics/pipe/simple/hidden{
 	dir = 9
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "js" = (
 /turf/simulated/floor/plasteel{
@@ -193,7 +193,7 @@
 /obj/effect/turf_decal/stripes/white/line{
 	dir = 1
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "kN" = (
 /obj/machinery/atmospherics/pipe/simple/hidden{
@@ -204,7 +204,7 @@
 	d2 = 8;
 	icon_state = "4-8"
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "lx" = (
 /obj/structure/filingcabinet/filingcabinet,
@@ -217,7 +217,7 @@
 /obj/structure/railing{
 	dir = 9
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "nI" = (
 /turf/simulated/floor/plasteel{
@@ -230,7 +230,7 @@
 	dir = 1
 	},
 /obj/structure/fans/tiny,
-/turf/simulated/floor/plating,
+/turf/simulated/floor/plating/airless,
 /area/space)
 "ob" = (
 /turf/simulated/floor/plating/airless,
@@ -246,13 +246,13 @@
 /area/space)
 "oQ" = (
 /obj/structure/railing,
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "oU" = (
 /obj/effect/turf_decal/stripes/line{
 	dir = 5
 	},
-/turf/simulated/floor/engine,
+/turf/simulated/floor/engine/airless,
 /area/space)
 "qB" = (
 /obj/structure/closet/walllocker/emerglocker/north,
@@ -264,7 +264,7 @@
 "qN" = (
 /obj/structure/rack,
 /obj/item/clothing/mask/gas/explorer,
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "rJ" = (
 /obj/structure/shuttle/engine/heater{
@@ -300,13 +300,13 @@
 	d2 = 4;
 	icon_state = "0-4"
 	},
-/turf/simulated/floor/engine,
+/turf/simulated/floor/engine/airless,
 /area/space)
 "tG" = (
 /obj/structure/railing{
 	dir = 8
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "uJ" = (
 /obj/structure/extinguisher_cabinet{
@@ -332,7 +332,7 @@
 /obj/machinery/atmospherics/pipe/simple/hidden{
 	dir = 9
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "wP" = (
 /obj/structure/closet/walllocker/emerglocker/west,
@@ -359,7 +359,7 @@
 	d2 = 8;
 	icon_state = "4-8"
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "zb" = (
 /turf/simulated/floor/plasteel{
@@ -382,7 +382,7 @@
 	d2 = 2;
 	icon_state = "1-2"
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "AK" = (
 /obj/structure/ore_box,
@@ -430,7 +430,7 @@
 	dir = 6
 	},
 /obj/machinery/atmospherics/pipe/simple/hidden,
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "Dc" = (
 /obj/structure/table/reinforced,
@@ -447,7 +447,7 @@
 /obj/machinery/atmospherics/pipe/simple/hidden{
 	dir = 8
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "Eh" = (
 /turf/simulated/floor/plasteel{
@@ -471,11 +471,11 @@
 /obj/machinery/atmospherics/pipe/simple/hidden{
 	dir = 8
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "Fn" = (
 /obj/effect/spawner/window/shuttle,
-/turf/simulated/floor/plating,
+/turf/simulated/floor/plating/airless,
 /area/space)
 "Fp" = (
 /obj/machinery/suit_storage_unit/standard_unit,
@@ -551,7 +551,7 @@
 "Jk" = (
 /obj/machinery/door/airlock/maintenance_hatch,
 /obj/machinery/atmospherics/pipe/simple/hidden,
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "Jt" = (
 /obj/structure/railing,
@@ -598,13 +598,13 @@
 /obj/machinery/atmospherics/pipe/simple/hidden{
 	dir = 9
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "LE" = (
 /obj/effect/turf_decal/stripes/line{
 	dir = 4
 	},
-/turf/simulated/floor/engine,
+/turf/simulated/floor/engine/airless,
 /area/space)
 "LU" = (
 /obj/effect/decal/cleanable/crayon,
@@ -619,7 +619,7 @@
 	d2 = 2;
 	icon_state = "1-2"
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "My" = (
 /obj/structure/table,
@@ -634,7 +634,7 @@
 	dir = 6
 	},
 /obj/item/pickaxe,
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "ON" = (
 /turf/simulated/wall/mineral/plastitanium,
@@ -663,7 +663,7 @@
 	},
 /area/space)
 "QV" = (
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "QX" = (
 /obj/machinery/atmospherics/pipe/simple/hidden,
@@ -687,7 +687,7 @@
 "Rs" = (
 /obj/effect/spawner/window/shuttle,
 /obj/machinery/atmospherics/pipe/simple/hidden,
-/turf/simulated/floor/plating,
+/turf/simulated/floor/plating/airless,
 /area/space)
 "RU" = (
 /turf/simulated/floor/plasteel{
@@ -697,11 +697,11 @@
 /area/space)
 "RW" = (
 /obj/structure/table,
-/turf/simulated/floor/engine,
+/turf/simulated/floor/engine/airless,
 /area/space)
 "Sq" = (
 /obj/machinery/atmospherics/unary/passive_vent,
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "SI" = (
 /turf/simulated/floor/plasteel{
@@ -720,13 +720,13 @@
 /turf/simulated/wall/mineral/titanium,
 /area/space)
 "Tq" = (
-/turf/simulated/floor/engine,
+/turf/simulated/floor/engine/airless,
 /area/space)
 "TI" = (
 /obj/structure/railing/corner{
 	dir = 1
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "TQ" = (
 /obj/structure/window/reinforced{
@@ -833,7 +833,7 @@
 /obj/structure/window/reinforced{
 	dir = 8
 	},
-/turf/simulated/floor/plasteel,
+/turf/simulated/floor/plasteel/airless,
 /area/space)
 "Xx" = (
 /obj/machinery/iv_drip,

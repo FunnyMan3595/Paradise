@@ -118,7 +118,7 @@
 	icon_state = "bulb-broken";
 	status = 2
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "hY" = (
 /obj/machinery/door/airlock/multi_tile/glass{
@@ -175,7 +175,7 @@
 /obj/machinery/atmospherics/pipe/simple/hidden{
 	dir = 9
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "js" = (
 /obj/effect/decal/cleanable/dirt,
@@ -228,7 +228,7 @@
 /obj/structure/railing{
 	dir = 9
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "mc" = (
 /obj/effect/turf_decal/stripes/line{
@@ -304,7 +304,7 @@
 /area/space)
 "qN" = (
 /obj/structure/rack,
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "rJ" = (
 /obj/structure/shuttle/engine/heater{
@@ -345,7 +345,7 @@
 /obj/structure/railing{
 	dir = 8
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "uF" = (
 /obj/effect/decal/cleanable/dirt,
@@ -482,7 +482,7 @@
 	pixel_y = 8
 	},
 /obj/item/stack/rods/ten,
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "Ex" = (
 /obj/machinery/atmospherics/unary/passive_vent{
@@ -641,7 +641,7 @@
 	dir = 8
 	},
 /obj/effect/decal/cleanable/dirt,
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "LE" = (
 /obj/effect/turf_decal/stripes/line{
@@ -673,7 +673,7 @@
 	dir = 6
 	},
 /obj/item/rack_parts,
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "Ny" = (
 /obj/structure/grille/broken,
@@ -788,7 +788,7 @@
 /obj/structure/railing/corner{
 	dir = 1
 	},
-/turf/simulated/floor/catwalk,
+/turf/simulated/floor/catwalk/airless,
 /area/space)
 "TQ" = (
 /obj/structure/window/reinforced{
