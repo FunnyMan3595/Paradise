@@ -1,0 +1,1618 @@
+//MAP CONVERTED BY dmm2tgm.py THIS HEADER COMMENT PREVENTS RECONVERSION, DO NOT REMOVE
+"bd" = (
+/obj/machinery/computer/nonfunctional{
+	dir = 8
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"bg" = (
+/obj/item/shard,
+/obj/effect/landmark/burnturf,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "white"
+	},
+/area/space)
+"cb" = (
+/obj/effect/turf_decal/box,
+/obj/structure/chair/comfy/shuttle{
+	dir = 4
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"ce" = (
+/turf/template_noop,
+/area/template_noop)
+"cD" = (
+/obj/machinery/atmospherics/unary/passive_vent{
+	dir = 1
+	},
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2"
+	},
+/turf/simulated/floor/catwalk,
+/area/space)
+"cH" = (
+/obj/effect/landmark/burnturf,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"eE" = (
+/obj/machinery/light/small{
+	active_power_consumption = 0;
+	icon_state = "bulb-broken";
+	status = 2
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black";
+	dir = 6
+	},
+/area/space)
+"eH" = (
+/obj/item/stack/sheet/metal,
+/obj/effect/landmark/burnturf,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black";
+	dir = 8
+	},
+/area/space)
+"ff" = (
+/obj/structure/chair/comfy/shuttle{
+	dir = 1
+	},
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 9;
+	pixel_y = -1;
+	pixel_x = 2
+	},
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"fg" = (
+/obj/effect/turf_decal/delivery/partial,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"fm" = (
+/obj/structure/lattice,
+/obj/item/stack/rods/ten,
+/turf/space,
+/area/space)
+"fG" = (
+/obj/effect/turf_decal/stripes/line{
+	dir = 1
+	},
+/turf/simulated/floor/engine/airless,
+/area/space)
+"fU" = (
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 1;
+	pixel_y = 4;
+	pixel_x = 2
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"gf" = (
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black";
+	dir = 9
+	},
+/area/space)
+"gg" = (
+/obj/machinery/power/smes,
+/turf/simulated/floor/engine/airless,
+/area/space)
+"hx" = (
+/obj/effect/decal/cleanable/crayon{
+	icon_state = "h";
+	color = "red"
+	},
+/obj/effect/turf_decal/stripes/white/line{
+	dir = 1
+	},
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"hY" = (
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/obj/item/organ/internal/liver,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"ie" = (
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 8;
+	icon_state = "1-8"
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"ih" = (
+/obj/machinery/door/airlock/external/glass,
+/obj/machinery/atmospherics/pipe/simple/hidden,
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2"
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"iW" = (
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/obj/item/organ/internal/ears,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"ji" = (
+/obj/machinery/suit_storage_unit/standard_unit,
+/obj/effect/decal/cleanable/cobweb,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"jq" = (
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 9;
+	pixel_y = 4;
+	pixel_x = 2
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"js" = (
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "white"
+	},
+/area/space)
+"jv" = (
+/obj/structure/rack,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"kr" = (
+/obj/structure/chair/comfy/shuttle{
+	dir = 4
+	},
+/obj/machinery/light/small{
+	active_power_consumption = 0;
+	icon_state = "bulb-broken";
+	status = 2
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"ks" = (
+/obj/structure/rack,
+/obj/item/tank/internals/oxygen,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"kJ" = (
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 9;
+	pixel_y = -1;
+	pixel_x = 2
+	},
+/obj/effect/turf_decal/stripes/white/line{
+	dir = 1
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"kN" = (
+/obj/machinery/light/small{
+	active_power_consumption = 0;
+	dir = 1;
+	icon_state = "bulb-broken";
+	status = 2
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"lx" = (
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 5;
+	pixel_y = 5;
+	pixel_x = 2
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"lA" = (
+/obj/structure/railing{
+	dir = 9
+	},
+/turf/simulated/floor/catwalk,
+/area/space)
+"nI" = (
+/turf/space,
+/area/space)
+"nY" = (
+/obj/machinery/door/poddoor/shutters{
+	dir = 1
+	},
+/obj/structure/fans/tiny,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"ob" = (
+/turf/simulated/floor/plating/airless,
+/area/space)
+"oK" = (
+/obj/structure/extinguisher_cabinet{
+	pixel_y = 30
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"oQ" = (
+/obj/structure/railing,
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"oU" = (
+/obj/effect/turf_decal/stripes/line{
+	dir = 5
+	},
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/turf/simulated/floor/engine/airless,
+/area/space)
+"qB" = (
+/obj/structure/closet/walllocker/emerglocker/north,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"qN" = (
+/obj/structure/rack,
+/obj/item/clothing/mask/gas/explorer,
+/turf/simulated/floor/catwalk,
+/area/space)
+"rJ" = (
+/obj/structure/shuttle/engine/heater{
+	dir = 8
+	},
+/obj/structure/window/reinforced{
+	dir = 4
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"sf" = (
+/obj/structure/lattice,
+/obj/effect/landmark/burnturf,
+/turf/space,
+/area/space)
+"sg" = (
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 10;
+	pixel_y = 8;
+	pixel_x = 2
+	},
+/obj/effect/turf_decal/stripes/white/line{
+	dir = 4
+	},
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"sz" = (
+/obj/effect/turf_decal/stripes/line{
+	dir = 4
+	},
+/obj/machinery/power/terminal{
+	dir = 8
+	},
+/obj/structure/cable{
+	d2 = 4;
+	icon_state = "0-4"
+	},
+/turf/simulated/floor/engine/airless,
+/area/space)
+"tG" = (
+/obj/structure/railing{
+	dir = 8
+	},
+/turf/simulated/floor/catwalk,
+/area/space)
+"uJ" = (
+/obj/effect/decal/cleanable/ash,
+/obj/effect/landmark/damageturf,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"wt" = (
+/obj/structure/table_frame,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"wK" = (
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"wP" = (
+/obj/effect/landmark/damageturf,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "white"
+	},
+/area/space)
+"wR" = (
+/obj/machinery/mineral/ore_redemption,
+/obj/effect/turf_decal/delivery/hollow,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"xg" = (
+/obj/effect/decal/cleanable/crayon{
+	icon_state = "e";
+	color = "red";
+	pixel_y = -4;
+	pixel_x = -8
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"zb" = (
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "stairs";
+	dir = 4
+	},
+/area/space)
+"zj" = (
+/obj/structure/table,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black";
+	dir = 4
+	},
+/area/space)
+"zk" = (
+/obj/machinery/door/airlock/external/glass,
+/obj/machinery/atmospherics/pipe/simple/hidden,
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2"
+	},
+/turf/simulated/floor/catwalk,
+/area/space)
+"AK" = (
+/obj/structure/bed,
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/obj/item/organ/internal/eyes,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "white"
+	},
+/area/space)
+"AN" = (
+/obj/machinery/atmospherics/pipe/simple/hidden{
+	dir = 6
+	},
+/obj/structure/cable{
+	d1 = 2;
+	d2 = 4;
+	icon_state = "2-4"
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"Ba" = (
+/obj/machinery/atmospherics/binary/pump{
+	dir = 1
+	},
+/obj/effect/decal/cleanable/cobweb,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"Bs" = (
+/obj/structure/chair/comfy/shuttle{
+	dir = 8
+	},
+/obj/effect/turf_decal/box,
+/obj/effect/decal/cleanable/cobweb2,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"Bu" = (
+/obj/structure/railing/cap{
+	dir = 6
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"Dc" = (
+/obj/structure/table/reinforced,
+/obj/structure/noticeboard{
+	pixel_y = 27
+	},
+/obj/item/shard,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black";
+	dir = 1
+	},
+/area/space)
+"Du" = (
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/obj/item/organ/internal/ears,
+/obj/item/shard,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"Eh" = (
+/obj/structure/lattice,
+/turf/space,
+/area/space)
+"Ex" = (
+/obj/machinery/atmospherics/unary/passive_vent{
+	dir = 8
+	},
+/obj/effect/landmark/burnturf,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"EV" = (
+/obj/effect/decal/cleanable/crayon{
+	icon_state = "e";
+	color = "red";
+	pixel_y = -4;
+	pixel_x = -8
+	},
+/obj/effect/turf_decal/stripes/white/corner{
+	dir = 1
+	},
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"Fn" = (
+/obj/effect/spawner/window/shuttle,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"Fp" = (
+/obj/machinery/suit_storage_unit/standard_unit,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"FL" = (
+/obj/effect/turf_decal/delivery/partial,
+/obj/effect/turf_decal/caution/stand_clear,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"Gy" = (
+/obj/structure/girder,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"GC" = (
+/obj/structure/railing/cap{
+	dir = 9
+	},
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/obj/item/organ/internal/lungs,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"Hk" = (
+/obj/structure/shuttle/engine/large{
+	dir = 8
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"Hm" = (
+/obj/machinery/door/window/classic/reversed{
+	dir = 4
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "stairs";
+	dir = 8
+	},
+/area/space)
+"HP" = (
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 6;
+	pixel_y = 4;
+	pixel_x = 2
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"HS" = (
+/obj/structure/railing{
+	dir = 9
+	},
+/obj/effect/landmark/damageturf,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"HY" = (
+/obj/structure/table/reinforced,
+/obj/effect/decal/cleanable/cobweb2,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black";
+	dir = 5
+	},
+/area/space)
+"Iu" = (
+/obj/effect/landmark/damageturf,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"Jk" = (
+/obj/structure/grille/broken,
+/obj/effect/decal/cleanable/glass,
+/obj/item/shard,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"Jt" = (
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 10;
+	pixel_y = 5;
+	pixel_x = 2
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"JE" = (
+/obj/effect/turf_decal/loading_area,
+/obj/machinery/atmospherics/pipe/simple/hidden{
+	dir = 8
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"Kw" = (
+/obj/machinery/atmospherics/pipe/simple/hidden,
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2"
+	},
+/obj/effect/landmark/damageturf,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"Ld" = (
+/obj/structure/grille/broken,
+/obj/effect/decal/cleanable/glass,
+/obj/item/stack/rods/ten,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"Lo" = (
+/obj/machinery/computer/nonfunctional,
+/obj/machinery/light/small{
+	active_power_consumption = 0;
+	icon_state = "bulb-broken";
+	status = 2;
+	dir = 1
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black";
+	dir = 1
+	},
+/area/space)
+"Ly" = (
+/obj/effect/decal/cleanable/crayon{
+	icon_state = "l";
+	pixel_y = -8;
+	pixel_x = -16;
+	color = "red"
+	},
+/obj/effect/decal/cleanable/crayon{
+	icon_state = "p";
+	color = "red";
+	pixel_y = -2;
+	pixel_x = 2
+	},
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"LE" = (
+/obj/effect/turf_decal/stripes/line{
+	dir = 4
+	},
+/turf/simulated/floor/engine/airless,
+/area/space)
+"LU" = (
+/obj/effect/decal/cleanable/crayon,
+/turf/simulated/wall/mineral/titanium/nodecon/nodiagonal,
+/area/space)
+"Mi" = (
+/obj/machinery/atmospherics/pipe/simple/hidden{
+	dir = 10
+	},
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2"
+	},
+/turf/simulated/floor/catwalk,
+/area/space)
+"My" = (
+/obj/structure/table,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black";
+	dir = 6
+	},
+/area/space)
+"Nk" = (
+/obj/item/stack/sheet/metal,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"ON" = (
+/turf/simulated/wall/mineral/plastitanium,
+/area/space)
+"OR" = (
+/obj/structure/chair/comfy/shuttle{
+	dir = 4
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"Qk" = (
+/obj/machinery/atmospherics/pipe/simple/hidden{
+	dir = 5
+	},
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2"
+	},
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"QV" = (
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 10;
+	pixel_y = -1;
+	pixel_x = 2
+	},
+/obj/item/organ/internal/eyes,
+/obj/effect/landmark/damageturf,
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"QX" = (
+/obj/structure/railing,
+/obj/effect/landmark/burnturf,
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"Rd" = (
+/obj/effect/decal/cleanable/ash,
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 6;
+	pixel_y = 4;
+	pixel_x = 2
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black";
+	dir = 6
+	},
+/area/space)
+"Rs" = (
+/obj/effect/spawner/window/shuttle,
+/obj/machinery/atmospherics/pipe/simple/hidden,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"RU" = (
+/obj/effect/landmark/damageturf,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"RW" = (
+/obj/structure/table,
+/turf/simulated/floor/engine,
+/area/space)
+"Sq" = (
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"SI" = (
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black";
+	dir = 10
+	},
+/area/space)
+"SO" = (
+/obj/structure/lattice,
+/obj/item/shard,
+/obj/effect/decal/cleanable/glass,
+/turf/space,
+/area/space)
+"Tc" = (
+/turf/simulated/wall/mineral/titanium,
+/area/space)
+"Tq" = (
+/turf/simulated/floor/engine/airless,
+/area/space)
+"TI" = (
+/turf/simulated/floor/catwalk,
+/area/space)
+"TQ" = (
+/obj/structure/window/reinforced{
+	dir = 4
+	},
+/obj/structure/shuttle/engine/heater{
+	dir = 8
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"TS" = (
+/obj/structure/grille/broken,
+/obj/effect/decal/cleanable/glass,
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 4;
+	pixel_y = 5;
+	pixel_x = 2
+	},
+/obj/effect/landmark/damageturf,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"Ut" = (
+/obj/effect/landmark/damageturf,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black"
+	},
+/area/space)
+"Uw" = (
+/obj/effect/decal/cleanable/crayon{
+	icon_state = "m";
+	color = "red"
+	},
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"UL" = (
+/obj/item/bedsheet/medical,
+/obj/structure/bed,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "white"
+	},
+/area/space)
+"VO" = (
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/obj/item/organ/internal/lungs,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "blackcorner";
+	dir = 4
+	},
+/area/space)
+"Wf" = (
+/obj/effect/decal/cleanable/blood/splatter{
+	color = "red"
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"WD" = (
+/obj/structure/shuttle/engine/propulsion{
+	dir = 8
+	},
+/turf/simulated/floor/plating/airless,
+/area/space)
+"WK" = (
+/obj/structure/railing{
+	dir = 8
+	},
+/obj/machinery/light/small{
+	active_power_consumption = 0;
+	icon_state = "bulb-broken";
+	status = 2
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"Xp" = (
+/obj/machinery/atmospherics/pipe/simple/hidden,
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 8;
+	icon_state = "1-8"
+	},
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2"
+	},
+/obj/effect/landmark/burnturf,
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"Xs" = (
+/obj/effect/landmark/damageturf,
+/obj/effect/turf_decal/stripes/white/line{
+	dir = 8
+	},
+/turf/simulated/floor/plasteel/airless,
+/area/space)
+"Xx" = (
+/obj/machinery/iv_drip,
+/obj/effect/decal/cleanable/blood/tracks{
+	color = "red";
+	desc = "Your instincts say you shouldn't be following these.";
+	icon = 'icons/effects/blood.dmi';
+	icon_state = "tracks";
+	dir = 4;
+	pixel_y = 5;
+	pixel_x = 2
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "white"
+	},
+/area/space)
+"XB" = (
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+"Yk" = (
+/obj/effect/decal/cleanable/ash,
+/obj/effect/landmark/burnturf,
+/turf/simulated/floor/plating/airless,
+/area/space)
+"YS" = (
+/obj/machinery/light/small{
+	active_power_consumption = 0;
+	dir = 1;
+	icon_state = "bulb-broken";
+	status = 2
+	},
+/obj/effect/turf_decal/stripes/white/line{
+	dir = 8
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "black";
+	dir = 1
+	},
+/area/space)
+"YZ" = (
+/turf/simulated/wall/mineral/titanium/nodecon/nodiagonal,
+/area/space)
+"ZP" = (
+/obj/machinery/atmospherics/pipe/simple/hidden{
+	dir = 5
+	},
+/turf/simulated/floor/plasteel/airless{
+	icon_state = "dark"
+	},
+/area/space)
+
+(1,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ob
+Hk
+ON
+WD
+ON
+ob
+Hk
+ce
+ce
+ce
+"}
+(2,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ON
+ob
+ob
+ON
+rJ
+ON
+ob
+ob
+Gy
+ce
+ce
+"}
+(3,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Tc
+Tc
+rJ
+rJ
+Tc
+RW
+Tc
+rJ
+rJ
+Iu
+Eh
+ce
+"}
+(4,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Tc
+ji
+fG
+Tq
+gg
+Tq
+gg
+Tq
+Eh
+Eh
+cH
+ce
+"}
+(5,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+WD
+Tc
+ks
+oU
+LE
+sz
+LE
+sz
+Iu
+Eh
+ob
+Gy
+WD
+"}
+(6,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+TQ
+Tc
+Fp
+AN
+Kw
+Xp
+Qk
+ie
+Eh
+XB
+RU
+Tc
+TQ
+"}
+(7,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Tc
+Tc
+qB
+JE
+wR
+RU
+Ex
+wt
+lA
+tG
+tG
+Tc
+Tc
+"}
+(8,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Tc
+oK
+XB
+ob
+Eh
+sf
+cH
+TI
+gf
+SI
+Tc
+ce
+"}
+(9,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Tc
+kN
+Yk
+Eh
+fm
+nI
+Eh
+eH
+wK
+eE
+Tc
+ce
+"}
+(10,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Gy
+YZ
+Hm
+SO
+nI
+nI
+nI
+nI
+Eh
+Rd
+YZ
+Tc
+Tc
+"}
+(11,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+nY
+fg
+RU
+Iu
+nI
+nI
+nI
+nI
+nI
+Gy
+Tc
+cb
+Tc
+"}
+(12,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+nY
+FL
+qN
+Nk
+nI
+nI
+nI
+nI
+Eh
+Rs
+Ba
+ZP
+Fn
+"}
+(13,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+nY
+fg
+Iu
+Eh
+Eh
+nI
+Eh
+Eh
+cH
+ih
+cD
+Mi
+zk
+"}
+(14,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Tc
+LU
+Bs
+Eh
+fm
+Eh
+uJ
+Eh
+Eh
+Eh
+Fp
+YZ
+Tc
+"}
+(15,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Tc
+Gy
+sg
+cH
+Iu
+Eh
+Eh
+jq
+fU
+Tc
+Tc
+ce
+"}
+(16,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Fn
+AK
+wP
+Gy
+cH
+Wf
+Wf
+Gy
+Fn
+ce
+ce
+"}
+(17,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Fn
+Xx
+bg
+kJ
+hY
+iW
+HP
+Ut
+Fn
+ce
+ce
+"}
+(18,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Tc
+UL
+js
+hx
+Bu
+wK
+zj
+My
+Tc
+ce
+ce
+"}
+(19,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+WD
+Tc
+YS
+Xs
+EV
+QX
+zb
+HS
+WK
+Tc
+WD
+ce
+"}
+(20,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+rJ
+Tc
+Dc
+Sq
+Ly
+oQ
+XB
+GC
+RU
+Tc
+rJ
+ce
+"}
+(21,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Tc
+Tc
+Lo
+ff
+QV
+Uw
+Iu
+OR
+kr
+Tc
+Tc
+ce
+"}
+(22,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Tc
+HY
+VO
+wK
+xg
+ob
+bd
+bd
+Tc
+ce
+ce
+"}
+(23,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Tc
+YZ
+Iu
+lx
+Jt
+Du
+jv
+YZ
+Tc
+ce
+ce
+"}
+(24,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+Gy
+Fn
+Jk
+TS
+Ld
+Jk
+Gy
+ce
+ce
+ce
+"}
+(25,1,1) = {"
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+ce
+"}
