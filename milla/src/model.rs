@@ -195,6 +195,10 @@ pub(crate) struct Tile {
     pub(crate) superconductivity: Superconductivity,
     /// How much heat capacity the tile itself has, in joules per kelvin.
     pub(crate) innate_heat_capacity: f32,
+    /// How hot the tile's hotspot is. A hotspot is a sub-tile reagion that's caught fire.
+    pub(crate) hotspot_temperature: f32,
+    /// How much of the tile the hotspot covers. 1.0 would be the entire tile.
+    pub(crate) hotspot_volume: f32,
 }
 
 impl Tile {
@@ -206,6 +210,8 @@ impl Tile {
             mode: AtmosMode::Space,
             superconductivity: Superconductivity::new(),
             innate_heat_capacity: 0.0,
+            hotspot_temperature: 0.0,
+            hotspot_volume: 0.0,
         }
     }
     /// The total heat capacity of this tile and its gases, in joules per kelvin.
@@ -243,6 +249,8 @@ impl Tile {
         self.mode = other.mode;
         self.superconductivity.copy_from(&other.superconductivity);
         self.innate_heat_capacity = other.innate_heat_capacity;
+        self.hotspot_temperature = other.hotspot_temperature;
+        self.hotspot_volume = other.hotspot_volume;
     }
 }
 
@@ -273,6 +281,8 @@ impl From<&Tile> for Vec<ByondValue> {
             ByondValue::from(value.superconductivity.west),
             ByondValue::from(value.innate_heat_capacity),
             ByondValue::from(value.temperature()),
+            ByondValue::from(value.hotspot_temperature),
+            ByondValue::from(value.hotspot_volume),
         ]
     }
 }
