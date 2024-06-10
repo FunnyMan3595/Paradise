@@ -32,7 +32,7 @@
 
 #define MILLA (__milla || __detect_milla())
 
-#define MILLA_CALL(func, args...) call_ext(MILLA, "byond:[#func]_ffi")(args)
+#define MILLA_CALL(func, args...) call_ext(MILLA, "byond:" + (#func) + "_ffi")(args)
 
 /proc/milla_init_z(z)
 	return MILLA_CALL(initialize, z)
@@ -40,8 +40,8 @@
 /proc/is_milla_synchronous(tick)
 	return MILLA_CALL(is_synchronous, tick)
 
-/proc/set_tile_atmos(turf/T, airtight_north, airtight_east, airtight_south, airtight_west, atmos_mode, environment_id, oxygen, carbon_dioxide, nitrogen, toxins, sleeping_agent, agent_b, temperature, innate_heat_capacity)
-	return MILLA_CALL(set_tile, T, airtight_north, airtight_east, airtight_south, airtight_west, atmos_mode, environment_id, oxygen, carbon_dioxide, nitrogen, toxins, sleeping_agent, agent_b, temperature, innate_heat_capacity)
+/proc/set_tile_atmos(turf/T, airtight_north, airtight_east, airtight_south, airtight_west, atmos_mode, environment_id, oxygen, carbon_dioxide, nitrogen, toxins, sleeping_agent, agent_b, temperature, innate_heat_capacity, hotspot_temperature, hotspot_volume)
+	return MILLA_CALL(set_tile, T, airtight_north, airtight_east, airtight_south, airtight_west, atmos_mode, environment_id, oxygen, carbon_dioxide, nitrogen, toxins, sleeping_agent, agent_b, temperature, innate_heat_capacity, hotspot_temperature, hotspot_volume)
 
 /proc/get_tile_atmos(turf/T, list/L)
 	return MILLA_CALL(get_tile, T, L)
@@ -100,15 +100,17 @@
 #define MILLA_INDEX_SUPERCONDUCTIVITY_WEST	13
 #define MILLA_INDEX_INNATE_HEAT_CAPACITY	14
 #define MILLA_INDEX_TEMPERATURE				15
+#define MILLA_INDEX_HOTSPOT_TEMPERATURE		16
+#define MILLA_INDEX_HOTSPOT_VOLUME			17
 
 /// The number of values per tile.
-#define MILLA_TILE_SIZE						MILLA_INDEX_TEMPERATURE
+#define MILLA_TILE_SIZE						MILLA_INDEX_HOTSPOT_VOLUME
 
 // These are only for InterestingTiles.
-#define MILLA_INDEX_TURF					16
-#define MILLA_INDEX_INTERESTING_REASONS		17
-#define MILLA_INDEX_AIRFLOW_X				18
-#define MILLA_INDEX_AIRFLOW_Y				19
+#define MILLA_INDEX_TURF					18
+#define MILLA_INDEX_INTERESTING_REASONS		19
+#define MILLA_INDEX_AIRFLOW_X				20
+#define MILLA_INDEX_AIRFLOW_Y				21
 
 /// The number of values per interesting tile.
 #define MILLA_INTERESTING_TILE_SIZE			MILLA_INDEX_AIRFLOW_Y

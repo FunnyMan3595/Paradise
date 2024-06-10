@@ -19,8 +19,12 @@ pub(crate) const R_IDEAL_GAS_EQUATION: f32 = 8.31;
 /// How big a tile is, in liters.
 pub(crate) const TILE_VOLUME: f32 = 2500.0;
 
-/// How many moles are needed to make toxins visible.
-pub(crate) const TOXINS_VISIBILITY_MOLES: f32 = 0.5;
+/// How many moles of toxins are needed for a fire to exist. For reasons, this is also how hany
+/// moles are needed to be visible.
+pub(crate) const TOXINS_MIN_FIRE_AND_VISIBILITY_MOLES: f32 = 0.5;
+
+/// How many moles of oxygen are needed for a fire to exist.
+pub(crate) const OXYGEN_MIN_FIRE_MOLES: f32 = 0.5;
 
 /// How many moles are needed to make sleeping gas visible.
 pub(crate) const SLEEPING_GAS_VISIBILITY_MOLES: f32 = 1.0;

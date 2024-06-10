@@ -175,19 +175,28 @@ pub(crate) fn check_interesting(
     new_interesting_tiles: &Bag<InterestingTile>,
 ) -> Result<(), eyre::Error> {
     let mut reasons: ReasonFlags = ReasonFlags::empty();
-    if (my_inactive_tile.gases.toxins() >= TOXINS_VISIBILITY_MOLES)
-        != (my_tile.gases.toxins() >= TOXINS_VISIBILITY_MOLES)
+    if fuel_burnt > 0.0 {
+        // FIRE!
+        reasons |= ReasonFlags::DISPLAY;
+    } else if (my_inactive_tile.gases.toxins() >= TOXINS_MIN_FIRE_AND_VISIBILITY_MOLES)
+        != (my_tile.gases.toxins() >= TOXINS_MIN_FIRE_AND_VISIBILITY_MOLES)
     {
-        // Crossed the toxins visibility threshold.
+        // Crossed the toxins fire and visibility threshold.
         reasons |= ReasonFlags::DISPLAY;
     } else if (my_inactive_tile.gases.sleeping_agent() >= SLEEPING_GAS_VISIBILITY_MOLES)
         != (my_tile.gases.sleeping_agent() >= SLEEPING_GAS_VISIBILITY_MOLES)
     {
         // Crossed the sleeping agent visibility threshold.
         reasons |= ReasonFlags::DISPLAY;
+    } else if (my_inactive_tile.gases.oxygen() >= OXYGEN_MIN_FIRE_MOLES) != (my_tile.gases.oxygen() >= OXYGEN_MIN_FIRE_MOLES) {
+        // Crossed the oxygen fire threshold.
+        reasons |= ReasonFlags::DISPLAY;
+    } else if (my_inactive_tile.temperature() >= PLASMA_BURN_MIN_TEMP) != (my_tile.temperature() >= PLASMA_BURN_MIN_TEMP) {
+        // Fire might have started or stopped.
+        reasons |= ReasonFlags::DISPLAY;
     }
-    let temperature = my_inactive_tile.temperature();
-    if temperature > PLASMA_BURN_MIN_TEMP {
+
+    if my_inactive_tile.temperature() > PLASMA_BURN_MIN_TEMP {
         match my_inactive_tile.mode {
             // In environments we expect to be hot, we don't normally flag that as interesting.
             AtmosMode::ExposedTo { environment_id } => {
@@ -200,7 +209,7 @@ pub(crate) fn check_interesting(
                     }
 
                     let environment_temp = environments[environment_id as usize].temperature();
-                    if environment_temp + 1.0 >= temperature {
+                    if environment_temp + 1.0 >= my_inactive_tile.temperature() {
                         // No active fire, not hotter than normal. Not interesting.
                     } else {
                         // Oh, hey, we're hotter than normal, and can start fires.
@@ -265,17 +274,40 @@ pub(crate) fn is_significant(tile: &Tile, gas: usize) -> bool {
 }
 
 /// Perform chemical reactions on the tile.
-pub(crate) fn react(my_inactive_tile: &mut Tile) -> f32 {
+pub(crate) fn react(my_inactive_tile: &mut Tile, hotspot_step: bool) -> f32 {
     let mut fuel_burnt: f32 = 0.0;
-    // Handle reactions
-    let mut my_inactive_temperature = my_inactive_tile.temperature();
+
+    let fraction: f32;
+    let mut cached_heat_capacity: f32;
+    let mut cached_temperature: f32;
+    let mut thermal_energy: f32;
+    if hotspot_step {
+        if my_inactive_tile.hotspot_volume <= 0.0 || my_inactive_tile.hotspot_temperature <= my_inactive_tile.temperature() {
+            // No need for a hotspot.
+            my_inactive_tile.hotspot_temperature = 0.0;
+            my_inactive_tile.hotspot_volume = 0.0;
+            return 0.0;
+        }
+
+        fraction = my_inactive_tile.hotspot_volume;
+        cached_heat_capacity = fraction * my_inactive_tile.heat_capacity();
+        cached_temperature = my_inactive_tile.hotspot_temperature;
+        thermal_energy = cached_temperature * cached_heat_capacity;
+    } else {
+        fraction = 1.0 - my_inactive_tile.hotspot_volume;
+        cached_heat_capacity = fraction * my_inactive_tile.heat_capacity();
+        thermal_energy = my_inactive_tile.thermal_energy;
+        cached_temperature = thermal_energy / cached_heat_capacity;
+    }
+    let initial_thermal_energy = thermal_energy;
+
     // Agent B converting CO2 to O2
-    if my_inactive_temperature > AGENT_B_CONVERSION_TEMP
+    if cached_temperature > AGENT_B_CONVERSION_TEMP
         && is_significant(my_inactive_tile, GAS_AGENT_B)
         && is_significant(my_inactive_tile, GAS_CARBON_DIOXIDE)
         && is_significant(my_inactive_tile, GAS_TOXINS)
     {
-        let co2_converted = (my_inactive_tile.gases.carbon_dioxide() * 0.75)
+        let co2_converted = fraction * (my_inactive_tile.gases.carbon_dioxide() * 0.75)
             .min(my_inactive_tile.gases.toxins() * 0.25)
             .min(my_inactive_tile.gases.agent_b() * 0.05);
 
@@ -288,26 +320,24 @@ pub(crate) fn react(my_inactive_tile: &mut Tile) -> f32 {
         my_inactive_tile
             .gases
             .set_agent_b(my_inactive_tile.gases.agent_b() - co2_converted * 0.05);
-        // Recalculate existing thermal energy to account for the decrease in heat capacity
-        // caused by turning very high capacity toxins into much lower capacity carbon
-        // dioxide.
-        my_inactive_tile.thermal_energy =
-            my_inactive_temperature * my_inactive_tile.heat_capacity();
+        // Recalculate existing thermal energy to account for the change in heat capacity.
+        cached_heat_capacity = fraction * my_inactive_tile.heat_capacity();
+        thermal_energy = cached_temperature * cached_heat_capacity;
         // THEN we can add in the new thermal energy.
-        my_inactive_tile.thermal_energy += co2_converted * AGENT_B_CONVERSION_ENERGY;
+        thermal_energy += AGENT_B_CONVERSION_ENERGY * co2_converted;
         // Recalculate temperature for any subsequent reactions.
-        my_inactive_temperature = my_inactive_tile.temperature();
+        cached_temperature = thermal_energy / cached_heat_capacity;
         fuel_burnt += co2_converted;
     }
     // Nitrous Oxide breaking down into nitrogen and oxygen.
-    if my_inactive_temperature > SLEEPING_GAS_BREAKDOWN_TEMP
+    if cached_temperature > SLEEPING_GAS_BREAKDOWN_TEMP
         && is_significant(my_inactive_tile, GAS_SLEEPING_AGENT)
     {
         let reaction_percent = (0.00002
-            * (my_inactive_temperature - (0.00001 * (my_inactive_temperature.powi(2)))))
+            * (cached_temperature - (0.00001 * (cached_temperature.powi(2)))))
         .max(0.0)
         .min(1.0);
-        let nitrous_decomposed = reaction_percent * my_inactive_tile.gases.sleeping_agent();
+        let nitrous_decomposed = reaction_percent * fraction * my_inactive_tile.gases.sleeping_agent();
 
         my_inactive_tile
             .gases
@@ -318,25 +348,25 @@ pub(crate) fn react(my_inactive_tile: &mut Tile) -> f32 {
         my_inactive_tile
             .gases
             .set_oxygen(my_inactive_tile.gases.oxygen() + nitrous_decomposed / 2.0);
-        // Recalculate existing thermal energy to account for the decrease in heat capacity
-        // caused by turning very high capacity toxins into much lower capacity carbon
-        // dioxide.
-        my_inactive_tile.thermal_energy =
-            my_inactive_temperature * my_inactive_tile.heat_capacity();
+
+        // Recalculate existing thermal energy to account for the change in heat capacity.
+        cached_heat_capacity = fraction * my_inactive_tile.heat_capacity();
+        thermal_energy = cached_temperature * cached_heat_capacity;
         // THEN we can add in the new thermal energy.
-        my_inactive_tile.thermal_energy += NITROUS_BREAKDOWN_ENERGY * nitrous_decomposed;
+        thermal_energy += NITROUS_BREAKDOWN_ENERGY * nitrous_decomposed;
         // Recalculate temperature for any subsequent reactions.
-        my_inactive_temperature = my_inactive_tile.temperature();
+        cached_temperature = thermal_energy / cached_heat_capacity;
+
         fuel_burnt += nitrous_decomposed;
     }
     // Plasmafire!
-    if my_inactive_temperature > PLASMA_BURN_MIN_TEMP
+    if cached_temperature > PLASMA_BURN_MIN_TEMP
         && is_significant(my_inactive_tile, GAS_TOXINS)
         && is_significant(my_inactive_tile, GAS_OXYGEN)
     {
         // How efficient is the burn?
         // Linear scaling fom 0 to 1 as temperatue goes from minimum to optimal.
-        let efficiency = ((my_inactive_temperature - PLASMA_BURN_MIN_TEMP)
+        let efficiency = ((cached_temperature - PLASMA_BURN_MIN_TEMP)
             / (PLASMA_BURN_OPTIMAL_TEMP - PLASMA_BURN_MIN_TEMP))
             .max(0.0)
             .min(1.0);
@@ -351,7 +381,7 @@ pub(crate) fn react(my_inactive_tile: &mut Tile) -> f32 {
         // Capped by oxygen availability. Significantly more oxygen is required than is
         // consumed. This means that if there is enough oxygen to burn all the plasma, the
         // oxygen-to-plasm ratio will increase while burning.
-        let burnable_plasma = my_inactive_tile
+        let burnable_plasma = fraction * my_inactive_tile
             .gases
             .toxins()
             .min(my_inactive_tile.gases.oxygen() / PLASMA_BURN_REQUIRED_OXYGEN_AVAILABILITY);
@@ -368,14 +398,32 @@ pub(crate) fn react(my_inactive_tile: &mut Tile) -> f32 {
         my_inactive_tile
             .gases
             .set_oxygen(my_inactive_tile.gases.oxygen() - plasma_burnt * oxygen_per_plasma);
-        // Recalculate existing thermal energy to account for the decrease in heat capacity
-        // caused by turning very high capacity toxins into much lower capacity carbon
-        // dioxide.
-        my_inactive_tile.thermal_energy =
-            my_inactive_temperature * my_inactive_tile.heat_capacity();
+
+        // Recalculate existing thermal energy to account for the change in heat capacity.
+        cached_heat_capacity = fraction * my_inactive_tile.heat_capacity();
+        thermal_energy = cached_temperature * cached_heat_capacity;
         // THEN we can add in the new thermal energy.
-        my_inactive_tile.thermal_energy += PLASMA_BURN_ENERGY * plasma_burnt;
+        thermal_energy += PLASMA_BURN_ENERGY * plasma_burnt;
+        // Recalculate temperature for any subsequent reactions.
+        // (or we would, but this is the last reaction)
+        //cached_temperature = thermal_energy / cached_heat_capacity;
+
         fuel_burnt += plasma_burnt;
+    }
+
+    if hotspot_step {
+        if fuel_burnt == 0.0 {
+            // No need for a hotspot.
+            // Dump the excess energy into the tile.
+            my_inactive_tile.thermal_energy += thermal_energy - (my_inactive_tile.hotspot_temperature - my_inactive_tile.temperature()) * cached_heat_capacity;
+            // Delete the hotspot.
+            my_inactive_tile.hotspot_temperature = 0.0;
+            my_inactive_tile.hotspot_volume = 0.0;
+            return 0.0;
+        }
+        adjust_hotspot(my_inactive_tile, thermal_energy - my_inactive_tile.hotspot_temperature * cached_heat_capacity);
+    } else {
+        my_inactive_tile.thermal_energy += thermal_energy - initial_thermal_energy;
     }
 
     fuel_burnt
@@ -508,13 +556,87 @@ pub(crate) fn superconduct(my_tile: &mut Tile, their_tile: &mut Tile, is_east: b
     }
 
     // This is the formula from LINDA. I have no idea if it's a good one, I just copied it.
+    // Positive means heat flow from us to them.
+    // Negative means heat flow from them to us.
     let conduction = transfer_coefficient
         * (my_tile.temperature() - their_tile.temperature())
         * my_heat_capacity
         * their_heat_capacity
         / (my_heat_capacity + their_heat_capacity);
-    my_tile.thermal_energy -= conduction;
-    their_tile.thermal_energy += conduction;
+
+    // Half of the conduction always goes to the overall heat of the tile
+    my_tile.thermal_energy -= conduction / 2.0;
+    their_tile.thermal_energy += conduction / 2.0;
+
+    // The other half can spawn or expand hotspots.
+    if conduction > 0.0 && my_tile.temperature() > PLASMA_BURN_OPTIMAL_TEMP && their_tile.temperature() < PLASMA_BURN_OPTIMAL_TEMP {
+        // Positive: Spawn or expand their hotspot.
+        adjust_hotspot(their_tile, conduction / 2.0);
+        my_tile.thermal_energy -= conduction / 2.0;
+    } else if conduction < 0.0 && my_tile.temperature() < PLASMA_BURN_OPTIMAL_TEMP && their_tile.temperature() > PLASMA_BURN_OPTIMAL_TEMP {
+        // Negative: Spawn or expand my hotspot.
+        adjust_hotspot(my_tile, -conduction / 2.0);
+        their_tile.thermal_energy += conduction / 2.0;
+    } else {
+        // No need for hotspot adjustmen.
+        my_tile.thermal_energy -= conduction / 2.0;
+        their_tile.thermal_energy += conduction / 2.0;
+    }
+}
+
+// Adjusts the hotspot based on the given thermal energy delta.
+// For positive values, the energy will first be used to reach PLASMA_BURN_OPTIMAL_TEMP, then
+// to expand volume up to 1 (filled), and finally dumped into the tile's thermal energy.
+// For negative values, only the hotspot's volume is affected.
+pub(crate) fn adjust_hotspot(tile: &mut Tile, thermal_energy_delta: f32) {
+    let cached_heat_capacity = tile.heat_capacity();
+
+    if thermal_energy_delta < 0.0 {
+        // Shrink volume accordingly.
+        // How much heat do we need to fill the whole tile?
+        let total_heat_needed = cached_heat_capacity * tile.hotspot_temperature;
+        // How much heat do we have now?
+        let heat_available = cached_heat_capacity * tile.hotspot_temperature * tile.hotspot_volume + thermal_energy_delta;
+        // We fill that portion of the tile.
+        tile.hotspot_volume = heat_available / total_heat_needed;
+        return;
+    }
+
+    // Figure out how much heat we need to reach optimal temp.
+    let temperature_delta = PLASMA_BURN_OPTIMAL_TEMP - tile.hotspot_temperature.min(PLASMA_BURN_OPTIMAL_TEMP);
+    let heating_needed = cached_heat_capacity * temperature_delta;
+
+    if heating_needed <= thermal_energy_delta {
+        // Heat the hotspot to optimal.
+        tile.hotspot_temperature = PLASMA_BURN_OPTIMAL_TEMP;
+        let mut remaining_thermal_energy = thermal_energy_delta - heating_needed;
+
+        // Expand to new volume.
+        // How much heat do we need to fill the whole tile?
+        let total_heat_needed = cached_heat_capacity * PLASMA_BURN_OPTIMAL_TEMP;
+        // How hot is the tile?
+        let tile_temperature = tile.thermal_energy / cached_heat_capacity;
+        // How much thermal energy does the hotspot have, in addition to the tile's thermal energy?
+        let hotspot_thermal_energy = cached_heat_capacity * tile.hotspot_volume * (tile.hotspot_temperature -  tile_temperature);
+        // How much heat do we have total?
+        let heat_available  = tile.thermal_energy + hotspot_thermal_energy + remaining_thermal_energy;
+        if total_heat_needed <= heat_available {
+            // We can fill the tile!
+            // Overflow thermal energy.
+            remaining_thermal_energy = heat_available - total_heat_needed;
+            // Heat the tile up to match.
+            tile.thermal_energy = cached_heat_capacity * PLASMA_BURN_OPTIMAL_TEMP + remaining_thermal_energy;
+            // Destroy the hotspot.
+            tile.hotspot_temperature = 0.0;
+            tile.hotspot_volume = 0.0;
+        } else {
+            // Fill up the tile as much as we can.
+            tile.hotspot_volume = heat_available / total_heat_needed;
+        }
+    } else {
+        // Heat the hotspot as much as we can.
+        tile.hotspot_temperature += thermal_energy_delta / (tile.hotspot_volume * cached_heat_capacity);
+    }
 }
 
 // Yay, tests!

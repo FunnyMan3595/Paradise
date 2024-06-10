@@ -112,6 +112,8 @@ fn set_tile(
     agent_b: ByondValue,
     temperature: ByondValue,
     _innate_heat_capacity: ByondValue,
+    hotspot_temperature: ByondValue,
+    hotspot_volume: ByondValue,
 ) {
     logging::setup_panic_handler();
     let (x, y, z) = byond_xyz(&turf)?.coordinates();
@@ -136,6 +138,8 @@ fn set_tile(
         // Temporarily disabled to better match the existing system.
         //bounded_byond_to_option_f32(innate_heat_capacity, 0.0, f32::INFINITY)?,
         Some(0.0),
+        conversion::bounded_byond_to_option_f32(hotspot_temperature, 0.0, f32::INFINITY)?,
+        conversion::bounded_byond_to_option_f32(hotspot_volume, 0.0, 1.0)?,
     )?;
     Ok(Default::default())
 }
@@ -160,6 +164,8 @@ fn set_tile_airtight(
         conversion::byond_to_option_f32(airtight_east)?,
         conversion::byond_to_option_f32(airtight_south)?,
         conversion::byond_to_option_f32(airtight_west)?,
+        None,
+        None,
         None,
         None,
         None,
@@ -196,6 +202,8 @@ pub(crate) fn internal_set_tile(
     temperature: Option<f32>,
     thermal_energy: Option<f32>,
     innate_heat_capacity: Option<f32>,
+    hotspot_temperature: Option<f32>,
+    hotspot_volume: Option<f32>,
 ) -> Result<()> {
     let buffers = BUFFERS.get().ok_or(eyre!("BUFFERS not initialized."))?;
     let active = buffers.get_active().read().unwrap();
@@ -270,6 +278,12 @@ pub(crate) fn internal_set_tile(
     }
     if let Some(value) = thermal_energy {
         tile.thermal_energy = value;
+    }
+    if let Some(value) = hotspot_temperature {
+        tile.hotspot_temperature = value;
+    }
+    if let Some(value) = hotspot_volume {
+        tile.hotspot_volume = value;
     }
 
     Ok(())
