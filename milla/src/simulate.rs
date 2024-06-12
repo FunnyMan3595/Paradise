@@ -1,160 +1,436 @@
 use crate::constants::*;
 use crate::model::*;
+use crate::spring_chain;
 use byondapi::map::ByondXYZ;
 use eyre::eyre;
 use scc::Bag;
 
-/// Calculates the pressure flow out from this tile to the two neighboring tiles on this axis.
-/// For a tile losing air equally in all directions, flow will be zero.
-/// For a tile losing air towards positive only, flow will be the air pressure moved.
-pub(crate) fn calculate_flow(
-    maybe_negative_tile: Option<&Tile>,
-    tile: &Tile,
-    maybe_positive_tile: Option<&Tile>,
-    is_x: bool,
-) -> f32 {
-    let mut flow = 0.0;
-    let my_pressure = tile.pressure();
-    if let Some(negative_tile) = maybe_negative_tile {
-        // Make sure air can pass this way.
-        let mut permeable = true;
-        if is_x {
-            permeable = permeable
-                && !negative_tile
-                    .airtight_directions
-                    .contains(AirtightDirections::EAST);
-            permeable = permeable && !tile.airtight_directions.contains(AirtightDirections::WEST);
-        } else {
-            permeable = permeable
-                && !negative_tile
-                    .airtight_directions
-                    .contains(AirtightDirections::NORTH);
-            permeable = permeable && !tile.airtight_directions.contains(AirtightDirections::SOUTH);
-        }
-        if permeable {
-            let negative_pressure = negative_tile.pressure();
-            if negative_pressure < my_pressure {
-                // Causes flow in the negative direction.
-                flow += negative_pressure - my_pressure;
+/// Finds all the ways that air should not pass.
+pub(crate) fn find_walls(next: &mut ZLevel) {
+    for my_index in 0..MAP_SIZE * MAP_SIZE {
+        let x = (my_index / MAP_SIZE) as i32;
+        let y = (my_index % MAP_SIZE) as i32;
+
+        for (dir_index, (dx, dy)) in AXES.iter().enumerate() {
+            let maybe_their_index = ZLevel::maybe_get_index(x + dx, y + dy);
+            let their_index;
+            match maybe_their_index {
+                Some(index) => their_index = index,
+                None => {
+                    // Edge of the map, acts like a wall.
+                    let my_tile = next.get_tile_mut(my_index);
+                    my_tile.wall[dir_index] = true;
+                    continue;
+                }
             }
+
+            let (my_tile, their_tile) = next.get_pair_mut(my_index, their_index);
+            if let AtmosMode::Space = my_tile.mode {
+                if let AtmosMode::Space = their_tile.mode {
+                    // We consider consecutive space tiles to be a wall, because two or more space
+                    // tiles work the same as one.
+                    my_tile.wall[dir_index] = true;
+                    continue;
+                }
+            }
+
+            if *dx > 0
+                && (my_tile
+                    .airtight_directions
+                    .contains(AirtightDirections::EAST)
+                    || their_tile
+                        .airtight_directions
+                        .contains(AirtightDirections::WEST))
+            {
+                // Something's blocking airflow.
+                my_tile.wall[dir_index] = true;
+                continue;
+            } else if *dy > 0
+                && (my_tile
+                    .airtight_directions
+                    .contains(AirtightDirections::NORTH)
+                    || their_tile
+                        .airtight_directions
+                        .contains(AirtightDirections::SOUTH))
+            {
+                // Something's blocking airflow.
+                my_tile.wall[dir_index] = true;
+                continue;
+            }
+            my_tile.wall[dir_index] = false;
         }
     }
-    if let Some(positive_tile) = maybe_positive_tile {
-        // Make sure air can pass this way.
-        let mut permeable = true;
-        if is_x {
-            permeable = permeable
-                && !positive_tile
-                    .airtight_directions
-                    .contains(AirtightDirections::WEST);
-            permeable = permeable && !tile.airtight_directions.contains(AirtightDirections::EAST);
-        } else {
-            permeable = permeable
-                && !positive_tile
-                    .airtight_directions
-                    .contains(AirtightDirections::SOUTH);
-            permeable = permeable && !tile.airtight_directions.contains(AirtightDirections::NORTH);
-        }
-        if permeable {
-            let positive_pressure = positive_tile.pressure();
-            if positive_pressure < my_pressure {
-                // Causes flow in the positive direction.
-                flow += my_pressure - positive_pressure;
-            }
-        }
-    }
-    flow
 }
 
-/// Counts the number of adjacent tiles that can share atmos with this tile, i.e. have no blockers
-/// on either tile.
-#[allow(clippy::if_same_then_else)]
-pub(crate) fn count_connected_dirs(
-    z_level: &ZLevel,
-    index: usize,
-    x: i32,
-    y: i32,
-) -> Result<i32, eyre::Error> {
-    let mut connected_dirs = 0;
-
-    let tile = z_level.get_tile(index);
-    if let AtmosMode::Space = tile.mode {
-        // Space can always accept as much air as you throw at it.
-        return Ok(1);
-    }
-    for (dx, dy) in DIRECTIONS {
-        let maybe_other_index = ZLevel::maybe_get_index(x + dx, y + dy);
-        let other_index;
-        match maybe_other_index {
-            Some(index) => other_index = index,
-            None => continue,
-        }
-        let other_tile = z_level.get_tile(other_index);
-
-        if dx > 0
-            && !tile.airtight_directions.contains(AirtightDirections::EAST)
-            && !other_tile
-                .airtight_directions
-                .contains(AirtightDirections::WEST)
-        {
-            connected_dirs += 1;
-        } else if dy > 0
-            && !tile.airtight_directions.contains(AirtightDirections::NORTH)
-            && !other_tile
-                .airtight_directions
-                .contains(AirtightDirections::SOUTH)
-        {
-            connected_dirs += 1;
-        } else if dx < 0
-            && !tile.airtight_directions.contains(AirtightDirections::WEST)
-            && !other_tile
-                .airtight_directions
-                .contains(AirtightDirections::EAST)
-        {
-            connected_dirs += 1;
-        } else if dy < 0
-            && !tile.airtight_directions.contains(AirtightDirections::SOUTH)
-            && !other_tile
-                .airtight_directions
-                .contains(AirtightDirections::NORTH)
-        {
-            connected_dirs += 1;
-        }
+/// The core of the atmos engine: Moving gases around.
+pub(crate) fn pressure_flow(prev: &ZLevel, next: &mut ZLevel) {
+    // Loop through vertically.
+    let mut y_chain = Chain::new(AXIS_Y);
+    for index in 0..MAP_SIZE * MAP_SIZE {
+        y_chain.progress(prev, next, index);
     }
 
-    Ok(connected_dirs)
+    // Loop through horizontally.
+    let mut x_chain = Chain::new(AXIS_X);
+    for inv_index in 0..MAP_SIZE * MAP_SIZE {
+        let y = (inv_index / MAP_SIZE) as i32;
+        let x = (inv_index % MAP_SIZE) as i32;
+        let index = (x * (MAP_SIZE as i32) + y) as usize;
+
+        x_chain.progress(prev, next, index);
+    }
 }
 
-/// Sanitizes a tile to make sure it's not problematic.
-pub(crate) fn sanitize(my_inactive_tile: &mut Tile, my_tile: &Tile) -> bool {
+/// Represents a chain of connected tiles along one axis.
+pub(crate) struct Chain {
+    axis: usize,
+    started: bool,
+    start_index: usize,
+}
+
+impl Chain {
+    pub(crate) fn new(axis: usize) -> Self {
+        Chain {
+            axis,
+            started: false,
+            start_index: 0,
+        }
+    }
+
+    /// Progress the chain based on the next tile. If a completed chain is found, call
+    /// process_chain.
+    pub(crate) fn progress(&mut self, prev: &ZLevel, next: &mut ZLevel, index: usize) {
+        let mut complete = false;
+        let mut should_restart = false;
+        {
+            let next_tile = next.get_tile(index);
+            if !self.started && !next_tile.wall[self.axis] {
+                // New chain.
+                self.started = true;
+                self.start_index = index;
+            } else if self.started && next_tile.wall[self.axis] {
+                // Completed chain.
+                complete = true;
+            } else if self.started && next_tile.mode == AtmosMode::Space {
+                // This is a space tile between two non-space tiles.
+                // End the prior chain here, but also start a new one.
+                complete = true;
+                should_restart = true;
+            }
+        }
+
+        if !complete {
+            return;
+        }
+
+        process_chain(prev, next, self.start_index, index, self.axis);
+        if should_restart {
+            self.start_index = index;
+        } else {
+            self.started = false;
+        }
+    }
+}
+
+/// Handles a single chain of connected tiles along one axis.
+/// Updates momentum and moves air around based on it.
+pub(crate) fn process_chain(
+    prev: &ZLevel,
+    next: &mut ZLevel,
+    chain_start: usize,
+    chain_end: usize,
+    axis: usize,
+) {
+    let step: usize;
+    if axis == AXIS_X {
+        step = MAP_SIZE;
+    } else {
+        step = 1;
+    }
+
+    // Calculate the equilibrium point, i.e. where all the air would end up if we let the
+    // pressure equalize (ignoring temperature changes).
+    let mut equilibrium_positions: Vec<f32> = Vec::new();
+    let start_is_space = prev.get_tile(chain_start).mode == AtmosMode::Space;
+    let end_is_space = prev.get_tile(chain_end).mode == AtmosMode::Space;
+
+    let tile_delta = (chain_end - chain_start) / step;
+    let tiles = tile_delta + 1;
+    let start_offset: f32 = 0.0;
+    let end_offset = tiles as f32;
+    let mut total_pressure: f32 = 0.0;
+
+    for index in (chain_start..=chain_end).step_by(step) {
+        total_pressure += prev.get_tile(index).pressure();
+    }
+
+    if total_pressure == 0.0 {
+        // There's literally no air to move.
+        return;
+    }
+
+    let mut accumulated_pressure: f32 = 0.0;
+    for index in (chain_start..chain_end).step_by(step) {
+        accumulated_pressure += prev.get_tile(index).pressure();
+        equilibrium_positions.push(end_offset * accumulated_pressure / total_pressure);
+    }
+
+    // Use the equilibrium point as the air's "goal" and calculate the stress pulling it towards
+    // that goal. (Or, equivalently, the force required to stretch the spring chain to that
+    // extent.)
+    let midpoint = (chain_start + chain_end) / 2;
+    for (offset, index) in (chain_start..chain_end).step_by(step).enumerate() {
+        let prev_tile = prev.get_tile(index);
+        let moles = prev_tile.gases.moles().max(MINIMUM_NONZERO_MOLES);
+
+        // Calculate the stress needed to reach the desired equilibrium.
+        let mut left_position: f32 = start_offset;
+        if offset > 0 {
+            left_position = equilibrium_positions[offset - 1];
+        }
+        let left_moles = moles;
+
+        let position = equilibrium_positions[offset];
+
+        let prev_pos_tile = prev.get_tile(index + step);
+        let mut right_position: f32 = end_offset;
+        if offset + 1 < equilibrium_positions.len() {
+            right_position = equilibrium_positions[offset + 1];
+        }
+        let right_moles = prev_pos_tile.gases.moles().max(MINIMUM_NONZERO_MOLES);
+
+        let stress: f32;
+        if start_is_space && end_is_space {
+            if index < midpoint {
+                stress = left_moles + right_moles;
+            } else {
+                stress = -(left_moles + right_moles);
+            }
+        } else if start_is_space {
+            stress = left_moles + right_moles;
+        } else if end_is_space {
+            stress = -(left_moles + right_moles);
+        } else {
+            stress = -(position - left_position - 1.0) * left_moles
+                + (right_position - position - 1.0) * right_moles;
+        }
+
+        // Update border momentum based on the stress.
+        let tile = next.get_tile_mut(index);
+        tile.momentum[axis] = tile.momentum[axis] * MOMENTUM_DECAY - stress;
+    }
+
+    // Get ready to run the solver.
+    let mut momentum: Vec<f32> = Vec::new();
+    let mut mole_counts: Vec<f32> = Vec::new();
+    for index in (chain_start..=chain_end).step_by(step) {
+        let prev_tile = prev.get_tile(index);
+        let tile = next.get_tile_mut(index);
+
+        // Remove the gas that we're about to redistribute.
+        for gas in 0..GAS_COUNT {
+            tile.gases.values[gas] -= prev_tile.gases.values[gas] / 2.0;
+        }
+        tile.gases.set_dirty();
+        tile.thermal_energy -= prev_tile.thermal_energy / 2.0;
+
+        // Collect the momentum, except for the last tile (since it's the momentum at the wall).
+        if index != chain_end {
+            momentum.push(tile.momentum[axis] * MOMENTUM_MULTIPLIER);
+        }
+
+        // Collect the mole count.
+        // We pretend that tiles with less than MINIMUM_NONZERO_MOLES have that much gas instead,
+        // to avoid breaking our solver by making some springs have no resistance.
+        mole_counts.push(prev_tile.gases.moles().max(MINIMUM_NONZERO_MOLES));
+    }
+
+    // Run the solver.
+    // In effect, this resizes each tile to match how the momentum stretches or compresses it.
+    let mut displacements =
+        spring_chain::solve(mole_counts, momentum, start_is_space, end_is_space);
+    // Add the final wall onto the end.
+    displacements.push(0.0);
+
+    // Redistribute the gases into normal-size tiles.
+    let mut left: f32 = 0.0;
+    for (i, displacement) in displacements.iter().enumerate() {
+        let right = ((i + 1) as f32 + displacement).min(end_offset);
+        let prev_tile = prev.get_tile(chain_start + i * step);
+
+        // These are different so that ranges like 0.0-1.0 correctly put both ends in the same
+        // tile, even if both are off by a tiny amount.
+        let start_offset = (left + 0.0001).floor() as usize;
+        let end_offset = (right - 0.0001).floor().max(0.0) as usize;
+        // We allow > so that ranges like 1.0-1.0 put all the gas in offset 0, to avoid trying to
+        // access a tile beyond the grid.
+        if start_offset >= end_offset {
+            // All the air goes to one tile.
+            let tile = next.get_tile_mut(chain_start + end_offset * step);
+            for gas in 0..GAS_COUNT {
+                tile.gases.values[gas] += prev_tile.gases.values[gas] / 2.0;
+            }
+            tile.thermal_energy += prev_tile.thermal_energy / 2.0;
+
+            if right > left {
+                left = right;
+            }
+            continue;
+        }
+        let size = right - left;
+        for offset in start_offset..=end_offset {
+            let offset_size: f32;
+            if offset == start_offset {
+                offset_size = (start_offset + 1) as f32 - left;
+            } else if offset == end_offset {
+                offset_size = right - end_offset as f32;
+            } else {
+                offset_size = 1.0;
+            }
+
+            // Give this tile its share of gas.
+            let tile = next.get_tile_mut(chain_start + offset * step);
+            for gas in 0..GAS_COUNT {
+                tile.gases.values[gas] += 0.5 * prev_tile.gases.values[gas] * offset_size / size;
+            }
+            tile.thermal_energy += 0.5 * prev_tile.thermal_energy * offset_size / size;
+        }
+
+        if right > left {
+            left = right;
+        }
+    }
+}
+
+/// Applies effects that happen after the main airflow routine:
+/// * Tile modes
+/// * Momentum scaling
+/// * Superconductivity
+/// * Reactions
+/// * Sanitization
+/// * Looking for interesting tiles.
+pub(crate) fn post_process(
+    prev: &ZLevel,
+    next: &mut ZLevel,
+    environments: &Box<[Tile]>,
+    new_interesting_tiles: &Bag<InterestingTile>,
+    z: i32,
+) -> Result<(), eyre::Error> {
+    for my_index in 0..MAP_SIZE * MAP_SIZE {
+        let x = (my_index / MAP_SIZE) as i32;
+        let y = (my_index % MAP_SIZE) as i32;
+        let my_tile = prev.get_tile(my_index);
+
+        let my_old_pressure = my_tile.pressure();
+        let my_next_pressure;
+        {
+            let my_next_tile = next.get_tile_mut(my_index);
+            apply_tile_mode(my_next_tile, environments)?;
+            my_next_pressure = my_next_tile.pressure();
+        }
+
+        for (axis, (dx, dy)) in AXES.iter().enumerate() {
+            if let Some(pos_index) = ZLevel::maybe_get_index(x + dx, y + dy) {
+                let their_tile = prev.get_tile(pos_index);
+                let their_old_pressure = their_tile.pressure();
+                let (my_next_tile, their_next_tile) = next.get_pair_mut(my_index, pos_index);
+                if my_old_pressure + their_old_pressure == 0.0 {
+                    // No prior air.
+                    my_next_tile.momentum[axis] = 0.0;
+                    continue;
+                }
+                let their_next_pressure = their_next_tile.pressure();
+                let pressure_scaling = (my_next_pressure + their_next_pressure)
+                    / (my_old_pressure + their_old_pressure);
+                my_next_tile.momentum[axis] *= pressure_scaling;
+            }
+        }
+
+        if let AtmosMode::Space = my_tile.mode {
+            // Space doesn't superconduct, has no reactions, doesn't need to be sanitized, and is never interesting. (Take that, astrophysicists and astronomers!)
+            continue;
+        }
+
+        for (dx, dy) in AXES {
+            let maybe_their_index = ZLevel::maybe_get_index(x + dx, y + dy);
+            let their_index;
+            match maybe_their_index {
+                Some(index) => their_index = index,
+                None => continue,
+            }
+
+            let (my_next_tile, their_next_tile) = next.get_pair_mut(my_index, their_index);
+
+            if their_next_tile.mode != AtmosMode::Space {
+                superconduct(my_next_tile, their_next_tile, dx > 0, false);
+            }
+        }
+
+        let mut fuel_burnt;
+        {
+            let my_next_tile = next.get_tile_mut(my_index);
+
+            // Track how much "fuel" was burnt across all reactions.
+            fuel_burnt = react(my_next_tile, true);
+            fuel_burnt += react(my_next_tile, false);
+
+            // Sanitize the tile, to avoid negative/NaN/infinity spread.
+            sanitize(my_next_tile, my_tile);
+        }
+
+        check_interesting(
+            x,
+            y,
+            z,
+            next,
+            my_tile,
+            my_index,
+            fuel_burnt,
+            new_interesting_tiles,
+        )?;
+    }
+    Ok(())
+}
+
+pub(crate) fn sanitize(my_next_tile: &mut Tile, my_tile: &Tile) -> bool {
     let mut sanitized = false;
     for i in 0..GAS_COUNT {
-        if !my_inactive_tile.gases.values[i].is_finite() {
+        if !my_next_tile.gases.values[i].is_finite() {
             // Reset back to the last value, in the hopes that it's safe.
-            my_inactive_tile.gases.values[i] = my_tile.gases.values[i];
-            my_inactive_tile.gases.set_dirty();
+            my_next_tile.gases.values[i] = my_tile.gases.values[i];
+            my_next_tile.gases.set_dirty();
             sanitized = true;
-        } else if my_inactive_tile.gases.values[i] < 0.0 {
+        } else if my_next_tile.gases.values[i] < 0.0 {
             // Zero out anything that becomes negative.
-            my_inactive_tile.gases.values[i] = 0.0;
-            my_inactive_tile.gases.set_dirty();
+            my_next_tile.gases.values[i] = 0.0;
+            my_next_tile.gases.set_dirty();
             sanitized = true;
         }
     }
-    if !my_inactive_tile.thermal_energy.is_finite() {
+    if !my_next_tile.thermal_energy.is_finite() {
         // Reset back to the last value, in the hopes that it's safe.
-        my_inactive_tile.thermal_energy = my_tile.thermal_energy;
+        my_next_tile.thermal_energy = my_tile.thermal_energy;
         sanitized = true;
-    } else if my_inactive_tile.thermal_energy < 0.0 {
+    } else if my_next_tile.thermal_energy < 0.0 {
         // Zero out anything that becomes negative.
-        my_inactive_tile.thermal_energy = 0.0;
+        my_next_tile.thermal_energy = 0.0;
         sanitized = true;
     }
-    if my_inactive_tile.gases.moles() < MINIMUM_NONZERO_MOLES {
+    if !my_next_tile.momentum[0].is_finite() {
+        // Reset back to the last value, in the hopes that it's safe.
+        my_next_tile.momentum[0] = my_tile.momentum[0];
+        sanitized = true;
+    }
+    if !my_next_tile.momentum[1].is_finite() {
+        // Reset back to the last value, in the hopes that it's safe.
+        my_next_tile.momentum[1] = my_tile.momentum[1];
+        sanitized = true;
+    }
+    if my_next_tile.gases.moles() < MINIMUM_NONZERO_MOLES {
         for i in 0..GAS_COUNT {
-            my_inactive_tile.gases.values[i] = 0.0;
+            my_next_tile.gases.values[i] = 0.0;
         }
-        my_inactive_tile.thermal_energy = 0.0;
+        my_next_tile.thermal_energy = 0.0;
         // We don't count this as sanitized because it's expected.
     }
 
@@ -167,97 +443,92 @@ pub(crate) fn check_interesting(
     x: i32,
     y: i32,
     z: i32,
-    active: &std::sync::RwLockReadGuard<ZLevel>,
-    environments: &Box<[Tile]>,
+    next: &mut ZLevel,
     my_tile: &Tile,
-    my_inactive_tile: &Tile,
+    my_index: usize,
     fuel_burnt: f32,
     new_interesting_tiles: &Bag<InterestingTile>,
 ) -> Result<(), eyre::Error> {
     let mut reasons: ReasonFlags = ReasonFlags::empty();
-    if fuel_burnt > 0.0 {
-        // FIRE!
-        reasons |= ReasonFlags::DISPLAY;
-    } else if (my_inactive_tile.gases.toxins() >= TOXINS_MIN_FIRE_AND_VISIBILITY_MOLES)
-        != (my_tile.gases.toxins() >= TOXINS_MIN_FIRE_AND_VISIBILITY_MOLES)
     {
-        // Crossed the toxins fire and visibility threshold.
-        reasons |= ReasonFlags::DISPLAY;
-    } else if (my_inactive_tile.gases.sleeping_agent() >= SLEEPING_GAS_VISIBILITY_MOLES)
-        != (my_tile.gases.sleeping_agent() >= SLEEPING_GAS_VISIBILITY_MOLES)
-    {
-        // Crossed the sleeping agent visibility threshold.
-        reasons |= ReasonFlags::DISPLAY;
-    } else if (my_inactive_tile.gases.oxygen() >= OXYGEN_MIN_FIRE_MOLES)
-        != (my_tile.gases.oxygen() >= OXYGEN_MIN_FIRE_MOLES)
-    {
-        // Crossed the oxygen fire threshold.
-        reasons |= ReasonFlags::DISPLAY;
-    } else if (my_inactive_tile.temperature() >= PLASMA_BURN_MIN_TEMP)
-        != (my_tile.temperature() >= PLASMA_BURN_MIN_TEMP)
-    {
-        // Fire might have started or stopped.
-        reasons |= ReasonFlags::DISPLAY;
-    }
+        let my_next_tile = next.get_tile_mut(my_index);
+        if fuel_burnt > 0.0 {
+            // FIRE!
+            reasons |= ReasonFlags::DISPLAY;
+        } else if (my_next_tile.gases.toxins() >= TOXINS_MIN_FIRE_AND_VISIBILITY_MOLES)
+            != (my_tile.gases.toxins() >= TOXINS_MIN_FIRE_AND_VISIBILITY_MOLES)
+        {
+            // Crossed the toxins fire and visibility threshold.
+            reasons |= ReasonFlags::DISPLAY;
+        } else if (my_next_tile.gases.sleeping_agent() >= SLEEPING_GAS_VISIBILITY_MOLES)
+            != (my_tile.gases.sleeping_agent() >= SLEEPING_GAS_VISIBILITY_MOLES)
+        {
+            // Crossed the sleeping agent visibility threshold.
+            reasons |= ReasonFlags::DISPLAY;
+        } else if (my_next_tile.gases.oxygen() >= OXYGEN_MIN_FIRE_MOLES)
+            != (my_tile.gases.oxygen() >= OXYGEN_MIN_FIRE_MOLES)
+        {
+            // Crossed the oxygen fire threshold.
+            reasons |= ReasonFlags::DISPLAY;
+        } else if (my_next_tile.temperature() >= PLASMA_BURN_MIN_TEMP)
+            != (my_tile.temperature() >= PLASMA_BURN_MIN_TEMP)
+        {
+            // Fire might have started or stopped.
+            reasons |= ReasonFlags::DISPLAY;
+        }
 
-    if my_inactive_tile.temperature() > PLASMA_BURN_MIN_TEMP {
-        match my_inactive_tile.mode {
-            // In environments we expect to be hot, we don't normally flag that as interesting.
-            AtmosMode::ExposedTo { environment_id } => {
+        if my_next_tile.temperature() > PLASMA_BURN_MIN_TEMP {
+            if let AtmosMode::ExposedTo { .. } = my_next_tile.mode {
+                // Since environments have fixed gases and temperatures, we only count them as
+                // interesting (for heat) if there's an active fire.
                 if fuel_burnt > 0.0 {
-                    // Active fires are interesting, even if it's hot here normally.
                     reasons |= ReasonFlags::HOT;
-                } else {
-                    if environment_id as usize > environments.len() {
-                        return Err(eyre!("Invalid environment ID {}", environment_id));
-                    }
-
-                    let environment_temp = environments[environment_id as usize].temperature();
-                    if environment_temp + 1.0 >= my_inactive_tile.temperature() {
-                        // No active fire, not hotter than normal. Not interesting.
-                    } else {
-                        // Oh, hey, we're hotter than normal, and can start fires.
-                        // That's interesting.
-                        reasons |= ReasonFlags::HOT;
-                    }
                 }
+            } else {
+                // Anywhere else is interesting if it's hot enough to start a fire.
+                reasons |= ReasonFlags::HOT;
             }
-            // Anywhere else is interesting if it can start fires.
-            _ => reasons |= ReasonFlags::HOT,
         }
     }
-    let flow_x = calculate_flow(
-        active.maybe_get_tile(x - 1, y),
-        my_tile,
-        active.maybe_get_tile(x + 1, y),
-        true,
-    );
-    if flow_x.abs() > 1.0 {
-        // Pressure flowing out of this tile along the X axis.
-        reasons |= ReasonFlags::WIND;
+    let my_next_tile = next.get_tile(my_index);
+    let mut wind_x: f32 = 0.0;
+    if my_next_tile.momentum[AXIS_X] > 0.0 {
+        wind_x += my_next_tile.momentum[AXIS_X] * WIND_MULTIPLIER;
     }
-    let flow_y = calculate_flow(
-        active.maybe_get_tile(x, y - 1),
-        my_tile,
-        active.maybe_get_tile(x, y + 1),
-        false,
-    );
-    if flow_x.powi(2) + flow_y.powi(2) > 1.0 {
-        // Pressure flowing out of this tile along the Y axis.
+    if let Some(index) = ZLevel::maybe_get_index(x - 1, y) {
+        let their_next_tile = next.get_tile(index);
+        if their_next_tile.momentum[AXIS_X] < 0.0 {
+            // This is negative, but that's good, because we want it to fight against the wind
+            // towards +X.
+            wind_x += their_next_tile.momentum[AXIS_X] * WIND_MULTIPLIER;
+        }
+    }
+    let mut wind_y: f32 = 0.0;
+    if my_next_tile.momentum[AXIS_Y] > 0.0 {
+        wind_y += my_next_tile.momentum[AXIS_Y] * WIND_MULTIPLIER;
+    }
+    if let Some(index) = ZLevel::maybe_get_index(x, y - 1) {
+        let their_next_tile = next.get_tile(index);
+        if their_next_tile.momentum[AXIS_Y] < 0.0 {
+            // This is negative, but that's good, because we want it to fight against the wind
+            // towards +Y.
+            wind_y += their_next_tile.momentum[AXIS_Y] * WIND_MULTIPLIER;
+        }
+    }
+    if wind_x.powi(2) + wind_y.powi(2) > 1.0 {
+        // Pressure flowing out of this tile might move stuff.
         reasons |= ReasonFlags::WIND;
     }
 
     if !reasons.is_empty() {
-        // Boooooring.
-
         // :eyes:
         new_interesting_tiles.push(InterestingTile {
-            tile: my_inactive_tile.clone(),
+            tile: my_next_tile.clone(),
             // +1 here to convert from our 0-indexing to BYOND's 1-indexing.
             coords: ByondXYZ::with_coords((x as i16 + 1, y as i16 + 1, z as i16 + 1)),
             reasons,
-            flow_x,
-            flow_y,
+            wind_x,
+            wind_y,
         });
     }
 
@@ -278,7 +549,7 @@ pub(crate) fn is_significant(tile: &Tile, gas: usize) -> bool {
 }
 
 /// Perform chemical reactions on the tile.
-pub(crate) fn react(my_inactive_tile: &mut Tile, hotspot_step: bool) -> f32 {
+pub(crate) fn react(my_next_tile: &mut Tile, hotspot_step: bool) -> f32 {
     let mut fuel_burnt: f32 = 0.0;
 
     let fraction: f32;
@@ -286,49 +557,49 @@ pub(crate) fn react(my_inactive_tile: &mut Tile, hotspot_step: bool) -> f32 {
     let mut cached_temperature: f32;
     let mut thermal_energy: f32;
     if hotspot_step {
-        if my_inactive_tile.hotspot_volume <= 0.0
-            || my_inactive_tile.hotspot_temperature <= my_inactive_tile.temperature()
+        if my_next_tile.hotspot_volume <= 0.0
+            || my_next_tile.hotspot_temperature <= my_next_tile.temperature()
         {
             // No need for a hotspot.
-            my_inactive_tile.hotspot_temperature = 0.0;
-            my_inactive_tile.hotspot_volume = 0.0;
+            my_next_tile.hotspot_temperature = 0.0;
+            my_next_tile.hotspot_volume = 0.0;
             return 0.0;
         }
 
-        fraction = my_inactive_tile.hotspot_volume;
-        cached_heat_capacity = fraction * my_inactive_tile.heat_capacity();
-        cached_temperature = my_inactive_tile.hotspot_temperature;
+        fraction = my_next_tile.hotspot_volume;
+        cached_heat_capacity = fraction * my_next_tile.heat_capacity();
+        cached_temperature = my_next_tile.hotspot_temperature;
         thermal_energy = cached_temperature * cached_heat_capacity;
     } else {
-        fraction = 1.0 - my_inactive_tile.hotspot_volume;
-        cached_heat_capacity = fraction * my_inactive_tile.heat_capacity();
-        thermal_energy = my_inactive_tile.thermal_energy;
+        fraction = 1.0 - my_next_tile.hotspot_volume;
+        cached_heat_capacity = fraction * my_next_tile.heat_capacity();
+        thermal_energy = my_next_tile.thermal_energy;
         cached_temperature = thermal_energy / cached_heat_capacity;
     }
     let initial_thermal_energy = thermal_energy;
 
     // Agent B converting CO2 to O2
     if cached_temperature > AGENT_B_CONVERSION_TEMP
-        && is_significant(my_inactive_tile, GAS_AGENT_B)
-        && is_significant(my_inactive_tile, GAS_CARBON_DIOXIDE)
-        && is_significant(my_inactive_tile, GAS_TOXINS)
+        && is_significant(my_next_tile, GAS_AGENT_B)
+        && is_significant(my_next_tile, GAS_CARBON_DIOXIDE)
+        && is_significant(my_next_tile, GAS_TOXINS)
     {
         let co2_converted = fraction
-            * (my_inactive_tile.gases.carbon_dioxide() * 0.75)
-                .min(my_inactive_tile.gases.toxins() * 0.25)
-                .min(my_inactive_tile.gases.agent_b() * 0.05);
+            * (my_next_tile.gases.carbon_dioxide() * 0.75)
+                .min(my_next_tile.gases.toxins() * 0.25)
+                .min(my_next_tile.gases.agent_b() * 0.05);
 
-        my_inactive_tile
+        my_next_tile
             .gases
-            .set_carbon_dioxide(my_inactive_tile.gases.carbon_dioxide() - co2_converted);
-        my_inactive_tile
+            .set_carbon_dioxide(my_next_tile.gases.carbon_dioxide() - co2_converted);
+        my_next_tile
             .gases
-            .set_oxygen(my_inactive_tile.gases.oxygen() + co2_converted);
-        my_inactive_tile
+            .set_oxygen(my_next_tile.gases.oxygen() + co2_converted);
+        my_next_tile
             .gases
-            .set_agent_b(my_inactive_tile.gases.agent_b() - co2_converted * 0.05);
+            .set_agent_b(my_next_tile.gases.agent_b() - co2_converted * 0.05);
         // Recalculate existing thermal energy to account for the change in heat capacity.
-        cached_heat_capacity = fraction * my_inactive_tile.heat_capacity();
+        cached_heat_capacity = fraction * my_next_tile.heat_capacity();
         thermal_energy = cached_temperature * cached_heat_capacity;
         // THEN we can add in the new thermal energy.
         thermal_energy += AGENT_B_CONVERSION_ENERGY * co2_converted;
@@ -338,27 +609,26 @@ pub(crate) fn react(my_inactive_tile: &mut Tile, hotspot_step: bool) -> f32 {
     }
     // Nitrous Oxide breaking down into nitrogen and oxygen.
     if cached_temperature > SLEEPING_GAS_BREAKDOWN_TEMP
-        && is_significant(my_inactive_tile, GAS_SLEEPING_AGENT)
+        && is_significant(my_next_tile, GAS_SLEEPING_AGENT)
     {
         let reaction_percent = (0.00002
             * (cached_temperature - (0.00001 * (cached_temperature.powi(2)))))
         .max(0.0)
         .min(1.0);
-        let nitrous_decomposed =
-            reaction_percent * fraction * my_inactive_tile.gases.sleeping_agent();
+        let nitrous_decomposed = reaction_percent * fraction * my_next_tile.gases.sleeping_agent();
 
-        my_inactive_tile
+        my_next_tile
             .gases
-            .set_sleeping_agent(my_inactive_tile.gases.sleeping_agent() - nitrous_decomposed);
-        my_inactive_tile
+            .set_sleeping_agent(my_next_tile.gases.sleeping_agent() - nitrous_decomposed);
+        my_next_tile
             .gases
-            .set_nitrogen(my_inactive_tile.gases.nitrogen() + nitrous_decomposed);
-        my_inactive_tile
+            .set_nitrogen(my_next_tile.gases.nitrogen() + nitrous_decomposed);
+        my_next_tile
             .gases
-            .set_oxygen(my_inactive_tile.gases.oxygen() + nitrous_decomposed / 2.0);
+            .set_oxygen(my_next_tile.gases.oxygen() + nitrous_decomposed / 2.0);
 
         // Recalculate existing thermal energy to account for the change in heat capacity.
-        cached_heat_capacity = fraction * my_inactive_tile.heat_capacity();
+        cached_heat_capacity = fraction * my_next_tile.heat_capacity();
         thermal_energy = cached_temperature * cached_heat_capacity;
         // THEN we can add in the new thermal energy.
         thermal_energy += NITROUS_BREAKDOWN_ENERGY * nitrous_decomposed;
@@ -369,8 +639,8 @@ pub(crate) fn react(my_inactive_tile: &mut Tile, hotspot_step: bool) -> f32 {
     }
     // Plasmafire!
     if cached_temperature > PLASMA_BURN_MIN_TEMP
-        && is_significant(my_inactive_tile, GAS_TOXINS)
-        && is_significant(my_inactive_tile, GAS_OXYGEN)
+        && is_significant(my_next_tile, GAS_TOXINS)
+        && is_significant(my_next_tile, GAS_OXYGEN)
     {
         // How efficient is the burn?
         // Linear scaling fom 0 to 1 as temperatue goes from minimum to optimal.
@@ -390,26 +660,26 @@ pub(crate) fn react(my_inactive_tile: &mut Tile, hotspot_step: bool) -> f32 {
         // consumed. This means that if there is enough oxygen to burn all the plasma, the
         // oxygen-to-plasm ratio will increase while burning.
         let burnable_plasma = fraction
-            * my_inactive_tile
+            * my_next_tile
                 .gases
                 .toxins()
-                .min(my_inactive_tile.gases.oxygen() / PLASMA_BURN_REQUIRED_OXYGEN_AVAILABILITY);
+                .min(my_next_tile.gases.oxygen() / PLASMA_BURN_REQUIRED_OXYGEN_AVAILABILITY);
 
         // Actual burn amount.
         let plasma_burnt = efficiency * PLASMA_BURN_MAX_RATIO * burnable_plasma;
 
-        my_inactive_tile
+        my_next_tile
             .gases
-            .set_toxins(my_inactive_tile.gases.toxins() - plasma_burnt);
-        my_inactive_tile
+            .set_toxins(my_next_tile.gases.toxins() - plasma_burnt);
+        my_next_tile
             .gases
-            .set_carbon_dioxide(my_inactive_tile.gases.carbon_dioxide() + plasma_burnt);
-        my_inactive_tile
+            .set_carbon_dioxide(my_next_tile.gases.carbon_dioxide() + plasma_burnt);
+        my_next_tile
             .gases
-            .set_oxygen(my_inactive_tile.gases.oxygen() - plasma_burnt * oxygen_per_plasma);
+            .set_oxygen(my_next_tile.gases.oxygen() - plasma_burnt * oxygen_per_plasma);
 
         // Recalculate existing thermal energy to account for the change in heat capacity.
-        cached_heat_capacity = fraction * my_inactive_tile.heat_capacity();
+        cached_heat_capacity = fraction * my_next_tile.heat_capacity();
         thermal_energy = cached_temperature * cached_heat_capacity;
         // THEN we can add in the new thermal energy.
         thermal_energy += PLASMA_BURN_ENERGY * plasma_burnt;
@@ -424,20 +694,20 @@ pub(crate) fn react(my_inactive_tile: &mut Tile, hotspot_step: bool) -> f32 {
         if fuel_burnt == 0.0 {
             // No need for a hotspot.
             // Dump the excess energy into the tile.
-            my_inactive_tile.thermal_energy += thermal_energy
-                - (my_inactive_tile.hotspot_temperature - my_inactive_tile.temperature())
+            my_next_tile.thermal_energy += thermal_energy
+                - (my_next_tile.hotspot_temperature - my_next_tile.temperature())
                     * cached_heat_capacity;
             // Delete the hotspot.
-            my_inactive_tile.hotspot_temperature = 0.0;
-            my_inactive_tile.hotspot_volume = 0.0;
+            my_next_tile.hotspot_temperature = 0.0;
+            my_next_tile.hotspot_volume = 0.0;
             return 0.0;
         }
         adjust_hotspot(
-            my_inactive_tile,
-            thermal_energy - my_inactive_tile.hotspot_temperature * cached_heat_capacity,
+            my_next_tile,
+            thermal_energy - my_next_tile.hotspot_temperature * cached_heat_capacity,
         );
     } else {
-        my_inactive_tile.thermal_energy += thermal_energy - initial_thermal_energy;
+        my_next_tile.thermal_energy += thermal_energy - initial_thermal_energy;
     }
 
     fuel_burnt
@@ -445,107 +715,48 @@ pub(crate) fn react(my_inactive_tile: &mut Tile, hotspot_step: bool) -> f32 {
 
 /// Apply effects caused by the tile's atmos mode.
 pub(crate) fn apply_tile_mode(
-    my_tile: &Tile,
-    my_inactive_tile: &mut Tile,
+    my_next_tile: &mut Tile,
     environments: &Box<[Tile]>,
 ) -> Result<(), eyre::Error> {
-    match my_tile.mode {
+    match my_next_tile.mode {
         AtmosMode::Space => {
             // Space tiles lose all gas and thermal energy every tick.
             for gas in 0..GAS_COUNT {
-                my_inactive_tile.gases.values[gas] = 0.0;
+                my_next_tile.gases.values[gas] = 0.0;
             }
-            my_inactive_tile.gases.set_dirty();
-            my_inactive_tile.thermal_energy = 0.0;
+            my_next_tile.gases.set_dirty();
+            my_next_tile.thermal_energy = 0.0;
         }
         AtmosMode::ExposedTo { environment_id } => {
+            // Exposed tiles reset back to the same state every tick.
             if environment_id as usize > environments.len() {
                 return Err(eyre!("Invalid environment ID {}", environment_id));
             }
 
-            let mut environment = environments[environment_id as usize].clone();
-
-            // Calculate the amount of air and thermal energy transferred.
-            let (gas_change, thermal_energy_change) = share_air(
-                // Planetary atmos is aggressive and does a 1-connected-direction share
-                // with the otherwise-final air.
-                my_inactive_tile,
-                &environment,
-                1,
-                1,
-            );
-
-            // Transfer it.
-            for i in 0..GAS_COUNT {
-                if gas_change.values[i] != 0.0 {
-                    my_inactive_tile.gases.values[i] += gas_change.values[i];
-                    my_inactive_tile.gases.set_dirty();
-                }
-            }
-            my_inactive_tile.thermal_energy += thermal_energy_change;
-
-            // Temporarily override the tile's superconductivity, since there's no UP.
-            let real_superconductivity = my_inactive_tile.superconductivity;
-            my_inactive_tile.superconductivity = Superconductivity::new();
-
-            // Superconduct with planetary atmos.
-            superconduct(my_inactive_tile, &mut environment, true);
-
-            // Restore original superconductivity
-            my_inactive_tile.superconductivity = real_superconductivity;
+            let environment = &environments[environment_id as usize];
+            my_next_tile.gases.copy_from(&environment.gases);
+            my_next_tile.thermal_energy = environment.thermal_energy;
         }
         AtmosMode::Sealed => {
-            if my_inactive_tile.temperature() > T20C {
-                my_inactive_tile.thermal_energy *= 1.0 - SPACE_COOLING_FACTOR;
+            if my_next_tile.temperature() > PLASMA_BURN_MIN_TEMP {
+                my_next_tile.thermal_energy -= SPACE_COOLING_CAPACITY;
+                if my_next_tile.temperature() < TCMB {
+                    my_next_tile.thermal_energy = TCMB * my_next_tile.heat_capacity();
+                }
             }
         }
     }
     Ok(())
 }
 
-/// Shares air between two connected tiles.
-#[allow(clippy::needless_range_loop)]
-pub(crate) fn share_air(
-    mine: &Tile,
-    theirs: &Tile,
-    my_connected_dirs: i32,
-    their_connected_dirs: i32,
-) -> (GasSet, f32) {
-    let mut delta_gases = GasSet::new();
-    let mut delta_thermal_energy: f32 = 0.0;
-
-    // Since we're moving bits of gas independantly, we need to know the temperature of the gas
-    // mix.
-    let my_old_temperature = mine.temperature();
-    let their_old_temperature = theirs.temperature();
-
-    // Each gas is handled separately. This is dumb, but it's how LINDA did it, so it's used in V1.
-    for gas in 0..GAS_COUNT {
-        delta_gases.values[gas] = theirs.gases.values[gas] - mine.gases.values[gas];
-        if delta_gases.values[gas] > 0.0 {
-            // Gas flowing in from the other tile, limit by its connected_dirs.
-            delta_gases.values[gas] /= (their_connected_dirs + 1) as f32;
-            // Heat flowing in.
-            delta_thermal_energy +=
-                SPECIFIC_HEATS[gas] * delta_gases.values[gas] * their_old_temperature;
-        } else {
-            // Gas flowing out from this tile, limit by our connected_dirs.
-            delta_gases.values[gas] /= (my_connected_dirs + 1) as f32;
-            // Heat flowing out.
-            delta_thermal_energy +=
-                SPECIFIC_HEATS[gas] * delta_gases.values[gas] * my_old_temperature;
-        }
-    }
-
-    (delta_gases, delta_thermal_energy)
-}
-
-/// Performs superconduction between two superconductivity-connected tiles.
-pub(crate) fn superconduct(my_tile: &mut Tile, their_tile: &mut Tile, is_east: bool) {
+// Performs superconduction between two superconductivity-connected tiles.
+pub(crate) fn superconduct(my_tile: &mut Tile, their_tile: &mut Tile, is_east: bool, force: bool) {
     // Superconduction is scaled to the smaller directional superconductivity setting of the two
     // tiles.
     let mut transfer_coefficient: f32;
-    if is_east {
+    if force {
+        transfer_coefficient = OPEN_HEAT_TRANSFER_COEFFICIENT;
+    } else if is_east {
         transfer_coefficient = my_tile
             .superconductivity
             .east
@@ -753,7 +964,7 @@ mod tests {
         tile_b.gases.set_nitrogen(20.0);
         tile_b.thermal_energy = 200.0;
 
-        superconduct(&mut tile_a, &mut tile_b, true);
+        superconduct(&mut tile_a, &mut tile_b, true, false);
 
         // These values are arbitrary, they're just what we get right now.
         // Update them if the calculations changed intentionally.

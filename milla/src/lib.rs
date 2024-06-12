@@ -13,5 +13,6 @@ mod conversion;
 mod logging;
 mod model;
 mod simulate;
+mod spring_chain;
 mod statics;
 mod tick;

@@ -9,6 +9,7 @@ use byondapi::map::byond_xyz;
 use byondapi::prelude::*;
 use eyre::eyre;
 use eyre::Result;
+use std::env;
 use std::thread;
 use std::time::Instant;
 
@@ -16,6 +17,7 @@ use std::time::Instant;
 #[byondapi::bind]
 fn initialize(byond_z: ByondValue) {
     logging::setup_panic_handler();
+    env::set_var("RUST_BACKTRACE", "1");
     let z = f32::try_from(byond_z)? as i32 - 1;
     internal_initialize(z)?;
     Ok(Default::default())
@@ -454,12 +456,19 @@ fn spawn_tick_thread() {
     thread::spawn(|| -> Result<(), eyre::Error> {
         let now = Instant::now();
         let buffers = BUFFERS.get_or_init(Buffers::new);
-        tick::tick(buffers)?;
+        let result = tick::tick(buffers);
         TICK_TIME.store(
             now.elapsed().as_millis() as usize,
             std::sync::atomic::Ordering::Relaxed,
         );
-        call_global("milla_tick_finished", &[])?;
+        if result.is_ok() {
+            call_global("milla_tick_finished", &[])?;
+        } else {
+            let err = format!("MILLA tick error:\n----\n{:#?}\n----", result);
+            logging::write_log(err.clone());
+            call_global("milla_tick_error", &[ByondValue::new_str(err)?])?;
+        }
+
         Ok(())
     });
     Ok(Default::default())

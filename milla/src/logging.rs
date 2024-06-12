@@ -13,14 +13,15 @@ pub(crate) fn write_log<T: AsRef<[u8]>>(x: T) {
     writeln!(&mut f, "{}", String::from_utf8_lossy(x.as_ref())).unwrap();
 }
 
-/// Panic handler that dumps info out to ./milla_panic.txt (overwriting) if we crash.
+/// Panic handler that appends to ./milla_panic.txt if we crash.
 pub(crate) fn setup_panic_handler() {
     std::panic::set_hook(Box::new(|info| {
         let backtrace = Backtrace::force_capture();
-        std::fs::write(
-            "./milla_panic.txt",
-            format!("Panic {:#?}\n{:#?}", info, backtrace),
-        )
-        .unwrap();
+        let mut f = File::options()
+            .create(true)
+            .append(true)
+            .open("./milla_panic.txt")
+            .unwrap();
+        writeln!(&mut f, "Panic {:#?}\n{:#?}", info, backtrace).unwrap();
     }))
 }

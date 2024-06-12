@@ -67,15 +67,6 @@ SUBSYSTEM_DEF(air)
 	/// Are we currently running in a MILLA-safe context, i.e. is is_synchronous *guaranteed* to be TRUE. Nothing outside of this file should change this.
 	VAR_PRIVATE/in_milla_safe_code = FALSE
 
-	/// When did we start the last MILLA tick?
-	var/milla_tick_start = null
-
-	/// Is MILLA (and hence SSair) reliably healthy?
-	var/healthy = TRUE
-
-	/// When was MILLA last seen unhealthy?
-	var/last_unhealthy = 0
-
 	/// A list of callbacks waiting for MILLA to finish its tick and enter synchronous mode.
 	var/list/waiting_for_sync = list()
 
@@ -500,6 +491,14 @@ SUBSYSTEM_DEF(air)
 	SHOULD_NOT_SLEEP(TRUE)
 
 	SSair.on_milla_tick_finished()
+
+/proc/milla_tick_error(err)
+	// Any proc that wants MILLA to be synchronous should not sleep.
+	SHOULD_NOT_SLEEP(TRUE)
+
+	log_debug(err)
+	SSair.on_milla_tick_finished()
+
 
 /// Create a subclass of this and implement `on_run` to manipulate tile air safely.
 /datum/milla_safe

@@ -1,4 +1,3 @@
-use crate::constants::*;
 use crate::model::*;
 use crate::simulate;
 use crate::statics::*;
@@ -13,8 +12,8 @@ pub(crate) fn tick(buffers: &Buffers) -> Result<(), eyre::Error> {
     assert!(thread_priority::ThreadPriority::Min
         .set_for_current()
         .is_ok());
-    let active = buffers.get_active().read().unwrap();
-    let inactive = buffers.get_inactive().read().unwrap();
+    let prev = buffers.get_active().read().unwrap();
+    let next = buffers.get_inactive().read().unwrap();
 
     let new_interesting_tiles: Bag<InterestingTile> = Bag::default();
     let mut result: Result<(), eyre::Error> = Ok(());
@@ -25,21 +24,21 @@ pub(crate) fn tick(buffers: &Buffers) -> Result<(), eyre::Error> {
     thread::scope(|s| {
         // Force most things to be captured by reference, despite the `move`
         // in the thread spawn, which is really just for `z`.
-        let active = &active;
-        let inactive = &inactive;
+        let prev = &prev;
+        let next = &next;
         let new_interesting_tiles = &new_interesting_tiles;
 
         // Handle each Z level in its own thread.
         let mut handles = Vec::<ScopedJoinHandle<()>>::new();
-        for z in 0..active.0.len() {
+        for z in 0..prev.0.len() {
             handles.push(s.spawn(move || {
                 assert!(thread_priority::ThreadPriority::Min
                     .set_for_current()
                     .is_ok());
                 tick_z_level(
                     buffers,
-                    &active.0[z],
-                    &inactive.0[z],
+                    &prev.0[z],
+                    &next.0[z],
                     z as i32,
                     &new_interesting_tiles,
                 )
@@ -69,8 +68,8 @@ pub(crate) fn tick(buffers: &Buffers) -> Result<(), eyre::Error> {
 /// Runs a single tick of one Z level's atmospherics model.
 pub(crate) fn tick_z_level(
     buffers: &Buffers,
-    active_atmos_lock: &RwLock<ZLevel>,
-    inactive_atmos_lock: &RwLock<ZLevel>,
+    prev_atmos_lock: &RwLock<ZLevel>,
+    next_atmos_lock: &RwLock<ZLevel>,
     z: i32,
     new_interesting_tiles: &Bag<InterestingTile>,
 ) -> Result<(), eyre::Error> {
@@ -79,109 +78,15 @@ pub(crate) fn tick_z_level(
         let global_environments = buffers.environments.read().unwrap();
         environments = global_environments.clone().into_boxed_slice();
     }
-    let active = active_atmos_lock.read().unwrap();
-    let mut inactive = inactive_atmos_lock.write().unwrap();
+    let prev = prev_atmos_lock.read().unwrap();
+    let mut next = next_atmos_lock.write().unwrap();
+
     // Initialize the new frame as a copy of the old one.
-    inactive.copy_from(&active);
-    for my_index in 0..MAP_SIZE * MAP_SIZE {
-        let x = (my_index / MAP_SIZE) as i32;
-        let y = (my_index % MAP_SIZE) as i32;
-        let my_tile = active.get_tile(my_index);
-        let my_connected_dirs = simulate::count_connected_dirs(&active, my_index, x, y)?;
+    next.copy_from(&prev);
 
-        // Handle gas and heat exchange with neighbors.
-        for (dx, dy) in AXES {
-            let maybe_their_index = ZLevel::maybe_get_index(x + dx, y + dy);
-            let their_index;
-            match maybe_their_index {
-                Some(index) => their_index = index,
-                None => continue,
-            }
-
-            let their_tile = active.get_tile(their_index);
-            if let AtmosMode::Space = my_tile.mode {
-                if let AtmosMode::Space = their_tile.mode {
-                    // Exchange what, exactly?
-                    continue;
-                }
-            }
-            let their_connected_dirs =
-                simulate::count_connected_dirs(&active, their_index, x + dx, y + dy)?;
-
-            let (my_inactive_tile, their_inactive_tile) =
-                inactive.get_pair_mut(my_index, their_index);
-
-            // Bail if we shouldn't share air this way, but still run superconductivity.
-            if dx > 0
-                && (my_tile
-                    .airtight_directions
-                    .contains(AirtightDirections::EAST)
-                    || their_tile
-                        .airtight_directions
-                        .contains(AirtightDirections::WEST))
-            {
-                simulate::superconduct(my_inactive_tile, their_inactive_tile, true);
-                continue;
-            }
-            if dy > 0
-                && (my_tile
-                    .airtight_directions
-                    .contains(AirtightDirections::NORTH)
-                    || their_tile
-                        .airtight_directions
-                        .contains(AirtightDirections::SOUTH))
-            {
-                simulate::superconduct(my_inactive_tile, their_inactive_tile, false);
-                continue;
-            }
-
-            // Calculate the amount of air and thermal energy transferred.
-            let (gas_change, thermal_energy_change) =
-                simulate::share_air(my_tile, their_tile, my_connected_dirs, their_connected_dirs);
-
-            // Transfer it.
-            for i in 0..GAS_COUNT {
-                if gas_change.values[i] != 0.0 {
-                    my_inactive_tile.gases.values[i] += gas_change.values[i];
-                    my_inactive_tile.gases.set_dirty();
-                    their_inactive_tile.gases.values[i] -= gas_change.values[i];
-                    their_inactive_tile.gases.set_dirty();
-                }
-            }
-            my_inactive_tile.thermal_energy += thermal_energy_change;
-            their_inactive_tile.thermal_energy -= thermal_energy_change;
-
-            // Run superconductivity.
-            simulate::superconduct(my_inactive_tile, their_inactive_tile, dx > 0);
-        }
-
-        let my_inactive_tile = inactive.get_tile_mut(my_index);
-        simulate::apply_tile_mode(my_tile, my_inactive_tile, &environments)?;
-
-        if let AtmosMode::Space = my_tile.mode {
-            // Space has no reactions, doesn't need to be sanitized, and is never interesting.
-            continue;
-        }
-
-        // Track how much "fuel" was burnt across all reactions.
-        let mut fuel_burnt = simulate::react(my_inactive_tile, true);
-        fuel_burnt += simulate::react(my_inactive_tile, false);
-
-        // Sanitize the tile, to avoid negative/NaN/infinity spread.
-        simulate::sanitize(my_inactive_tile, my_tile);
-
-        simulate::check_interesting(
-            x,
-            y,
-            z,
-            &active,
-            &environments,
-            my_tile,
-            my_inactive_tile,
-            fuel_burnt,
-            new_interesting_tiles,
-        )?;
-    }
+    simulate::find_walls(&mut next);
+    simulate::pressure_flow(&prev, &mut next);
+    simulate::post_process(&prev, &mut next, &environments, new_interesting_tiles, z)?;
 
     Ok(())
 }
@@ -227,8 +132,8 @@ mod tests {
     where
         F: Fn(char) -> Tile,
     {
-        let active = buffers.get_active().read().unwrap();
-        let mut z_level = active.0[z as usize].write().unwrap();
+        let current = buffers.get_active().read().unwrap();
+        let mut z_level = current.0[z as usize].write().unwrap();
         for inv_y in 0..pattern.len() {
             // Reverse the Y direction, so +Y is up, like in the game.
             let y = pattern.len() - inv_y - 1;
@@ -278,8 +183,8 @@ mod tests {
     where
         F: Fn(char) -> TileChecker,
     {
-        let active = buffers.get_active().read().unwrap();
-        let z_level = active.0[z as usize].read().unwrap();
+        let current = buffers.get_active().read().unwrap();
+        let z_level = current.0[z as usize].read().unwrap();
         for inv_y in 0..pattern.len() {
             // Reverse the Y direction, so +Y is up, like in the game.
             let y = pattern.len() - inv_y - 1;
