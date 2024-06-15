@@ -514,6 +514,8 @@ mod tests {
             None,
             None,
             Some(1.0),
+            None,
+            Some(1.0),
         )
         .unwrap();
 
@@ -529,6 +531,8 @@ mod tests {
             }
             assert_eq!(tile.thermal_energy, 0.0);
             assert_eq!(tile.innate_heat_capacity, 1.0);
+            assert_eq!(tile.hotspot_temperature, 0.0);
+            assert_eq!(tile.hotspot_volume, 1.0);
         }
 
         // Set a different set of arbitrary data.
@@ -551,6 +555,8 @@ mod tests {
             None,
             Some(1.0),
             None,
+            Some(1.0),
+            None,
         )
         .unwrap();
 
@@ -566,6 +572,8 @@ mod tests {
             }
             assert_eq!(tile.thermal_energy, 1.0);
             assert_eq!(tile.innate_heat_capacity, 0.0);
+            assert_eq!(tile.hotspot_temperature, 1.0);
+            assert_eq!(tile.hotspot_volume, 0.0);
         }
     }
 }

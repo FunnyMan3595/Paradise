@@ -95,6 +95,7 @@ pub(crate) fn tick_z_level(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::*;
 
     fn set_with_defaults<F>(legend: F) -> impl Fn(char) -> Tile
     where
