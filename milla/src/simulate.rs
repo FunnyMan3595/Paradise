@@ -342,7 +342,9 @@ pub(crate) fn post_process(
                 let their_next_pressure = their_next_tile.pressure();
                 let pressure_scaling = (my_next_pressure + their_next_pressure)
                     / (my_old_pressure + their_old_pressure);
-                my_next_tile.momentum[axis] *= pressure_scaling;
+                if pressure_scaling < 1.0 {
+                    my_next_tile.momentum[axis] *= pressure_scaling;
+                }
             }
         }
 

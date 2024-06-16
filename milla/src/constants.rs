@@ -131,9 +131,9 @@ pub(crate) const NITROUS_BREAKDOWN_ENERGY: f32 = 200_000.0;
 /// How much thermal energy is produced, in joules per mole of sleeping toxins.
 pub(crate) const PLASMA_BURN_ENERGY: f32 = 3_000_000.0;
 
-/// We allow small deviations in tests, so that floating point precision doesn't cause problems.
+/// We allow small deviations in tests as our spring chain solution is not exact.
 #[cfg(test)]
-pub(crate) const TEST_TOLERANCE: f32 = 0.00001;
+pub(crate) const TEST_TOLERANCE: f32 = 0.1;
 
 /// How much of the difference in gas types we're willing to transfer in each direction each tick.
 pub(crate) const DIFFUSION_FACTOR: f32 = 0.25;

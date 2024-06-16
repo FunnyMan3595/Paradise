@@ -442,11 +442,11 @@ mod tests {
             &buffers,
             &[
                 "#######", //
-                "#     #", //
-                "#  0  #", //
-                "# 0X0 #", //
-                "#  0  #", //
-                "#     #", //
+                "#######", //
+                "###0###", //
+                "##0X0##", //
+                "###0###", //
+                "#######", //
                 "#######", //
             ],
             set_with_defaults(|_c: char| None),
@@ -459,18 +459,23 @@ mod tests {
             &buffers,
             &[
                 "#######", //
-                "#     #", //
-                "#  x  #", //
-                "# xxx #", //
-                "#  x  #", //
-                "#     #", //
+                "#######", //
+                "###x###", //
+                "##xXx##", //
+                "###x###", //
+                "#######", //
                 "#######", //
             ],
             expect_with_defaults(|c: char| match c {
-                'x' => Some(
+                'X' => Some(
                     TileChecker::new() //
                         .oxygen(20.0)
                         .thermal_energy(20.0),
+                ),
+                'x' => Some(
+                    TileChecker::new() //
+                        .oxygen(18.75)
+                        .thermal_energy(18.75),
                 ),
                 _ => None,
             }),
@@ -585,13 +590,13 @@ mod tests {
             expect_with_defaults(|c: char| match c {
                 '!' => Some(
                     TileChecker::new() //
-                        .oxygen(200.0)
-                        .thermal_energy(200.0),
+                        .oxygen(66.6)
+                        .thermal_energy(66.6),
                 ),
                 'x' => Some(
                     TileChecker::new() //
-                        .oxygen(50.0)
-                        .thermal_energy(50.0),
+                        .oxygen(83.35)
+                        .thermal_energy(83.35),
                 ),
                 _ => None,
             }),
@@ -700,8 +705,8 @@ mod tests {
             expect_with_defaults(|c: char| match c {
                 'x' => Some(
                     TileChecker::new() //
-                        .oxygen(50.0)
-                        .thermal_energy(50.0),
+                        .oxygen(75.0)
+                        .thermal_energy(75.0),
                 ),
                 _ => None,
             }),
@@ -756,9 +761,7 @@ mod tests {
                     TileChecker::new() //
                         .oxygen(8.0)
                         .nitrogen(14.0)
-                        // This value is arbitrary, it's just what we get right now.
-                        // Update it if the calculations changed intentionally.
-                        .thermal_energy(44_000.0),
+                        .temperature(500.0),
                 ),
                 _ => None,
             }),
@@ -805,8 +808,8 @@ mod tests {
             expect_with_defaults(|c: char| match c {
                 'Y' => Some(
                     TileChecker::new() //
-                        .oxygen(4.0)
-                        .nitrogen(7.0)
+                        .oxygen(8.0)
+                        .nitrogen(14.0)
                         .temperature(500.0),
                 ),
                 _ => None,
