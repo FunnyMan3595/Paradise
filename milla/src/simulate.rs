@@ -148,9 +148,6 @@ pub(crate) fn process_chain(
         step = 1;
     }
 
-    // Calculate the equilibrium point, i.e. where all the air would end up if we let the
-    // pressure equalize (ignoring temperature changes).
-    let mut equilibrium_positions: Vec<f32> = Vec::new();
     let start_is_space = prev.get_tile(chain_start).mode == AtmosMode::Space;
     let end_is_space = prev.get_tile(chain_end).mode == AtmosMode::Space;
 
@@ -158,26 +155,93 @@ pub(crate) fn process_chain(
     let tiles = tile_delta + 1;
     let start_offset: f32 = 0.0;
     let end_offset = tiles as f32;
-    let mut total_pressure: f32 = 0.0;
 
+    // Calculate the equilibrium positions.
+    let equilibrium_positions =
+        match calculate_equilibrium(prev, chain_start, chain_end, step, end_offset) {
+            Some(value) => value,
+            None => return,
+        };
+
+    // Update momentum based on equilibrium.
+    update_momentum(
+        prev,
+        next,
+        chain_start,
+        chain_end,
+        axis,
+        step,
+        start_offset,
+        end_offset,
+        equilibrium_positions,
+        start_is_space,
+        end_is_space,
+    );
+
+    // Collect the information the solver needs.
+    let (momentum, mole_counts) =
+        collect_chain_details(prev, next, chain_start, chain_end, axis, step);
+
+    // Run the solver.
+    // In effect, this resizes each tile to match how the momentum stretches or compresses it.
+    let mut displacements =
+        spring_chain::solve(mole_counts, momentum, start_is_space, end_is_space);
+    // Add the final wall onto the end.
+    displacements.push(0.0);
+
+    // Redistribute the gas based on the solution.
+    redistribute_gases(
+        prev,
+        next,
+        chain_start,
+        chain_end,
+        step,
+        end_offset,
+        displacements,
+    );
+}
+
+/// Calculates the equilibrium points that would stretch and compress the air into tiles that are all the same pressure.
+fn calculate_equilibrium(
+    prev: &ZLevel,
+    chain_start: usize,
+    chain_end: usize,
+    step: usize,
+    end_offset: f32,
+) -> Option<Vec<f32>> {
+    let mut equilibrium_positions: Vec<f32> = Vec::new();
+    let mut total_pressure: f32 = 0.0;
     for index in (chain_start..=chain_end).step_by(step) {
         total_pressure += prev.get_tile(index).pressure();
     }
-
     if total_pressure == 0.0 {
         // There's literally no air to move.
-        return;
+        return None;
     }
-
     let mut accumulated_pressure: f32 = 0.0;
     for index in (chain_start..chain_end).step_by(step) {
         accumulated_pressure += prev.get_tile(index).pressure();
         equilibrium_positions.push(end_offset * accumulated_pressure / total_pressure);
     }
+    Some(equilibrium_positions)
+}
 
-    // Use the equilibrium point as the air's "goal" and calculate the stress pulling it towards
-    // that goal. (Or, equivalently, the force required to stretch the spring chain to that
-    // extent.)
+/// Uses the equilibrium points as the air's "goal" and calculate the stress pulling it towards
+/// that goal. (Or, equivalently, the force required to stretch the spring chain to that
+/// extent.) Then uses that stress to update the tile's momentum.
+fn update_momentum(
+    prev: &ZLevel,
+    next: &mut ZLevel,
+    chain_start: usize,
+    chain_end: usize,
+    axis: usize,
+    step: usize,
+    start_offset: f32,
+    end_offset: f32,
+    equilibrium_positions: Vec<f32>,
+    start_is_space: bool,
+    end_is_space: bool,
+) {
     let midpoint = (chain_start + chain_end) / 2;
     for (offset, index) in (chain_start..chain_end).step_by(step).enumerate() {
         let prev_tile = prev.get_tile(index);
@@ -219,20 +283,22 @@ pub(crate) fn process_chain(
         let tile = next.get_tile_mut(index);
         tile.momentum[axis] = tile.momentum[axis] * MOMENTUM_DECAY - stress;
     }
+}
 
-    // Get ready to run the solver.
+/// Collects the momentum and mole counts of the chain for the solver.
+fn collect_chain_details(
+    prev: &ZLevel,
+    next: &mut ZLevel,
+    chain_start: usize,
+    chain_end: usize,
+    axis: usize,
+    step: usize,
+) -> (Vec<f32>, Vec<f32>) {
     let mut momentum: Vec<f32> = Vec::new();
     let mut mole_counts: Vec<f32> = Vec::new();
     for index in (chain_start..=chain_end).step_by(step) {
         let prev_tile = prev.get_tile(index);
         let tile = next.get_tile_mut(index);
-
-        // Remove the gas that we're about to redistribute.
-        for gas in 0..GAS_COUNT {
-            tile.gases.values[gas] -= prev_tile.gases.values[gas] / 2.0;
-        }
-        tile.gases.set_dirty();
-        tile.thermal_energy -= prev_tile.thermal_energy / 2.0;
 
         // Collect the momentum, except for the last tile (since it's the momentum at the wall).
         if index != chain_end {
@@ -244,13 +310,30 @@ pub(crate) fn process_chain(
         // to avoid breaking our solver by making some springs have no resistance.
         mole_counts.push(prev_tile.gases.moles().max(MINIMUM_NONZERO_MOLES));
     }
+    (momentum, mole_counts)
+}
 
-    // Run the solver.
-    // In effect, this resizes each tile to match how the momentum stretches or compresses it.
-    let mut displacements =
-        spring_chain::solve(mole_counts, momentum, start_is_space, end_is_space);
-    // Add the final wall onto the end.
-    displacements.push(0.0);
+/// Redistributes gas based on the solver's solution.
+fn redistribute_gases(
+    prev: &ZLevel,
+    next: &mut ZLevel,
+    chain_start: usize,
+    chain_end: usize,
+    step: usize,
+    end_offset: f32,
+    displacements: Vec<f32>,
+) {
+    // Remove the gas that we're about to redistribute.
+    for index in (chain_start..=chain_end).step_by(step) {
+        let prev_tile = prev.get_tile(index);
+        let tile = next.get_tile_mut(index);
+
+        for gas in 0..GAS_COUNT {
+            tile.gases.values[gas] -= prev_tile.gases.values[gas] / 2.0;
+        }
+        tile.gases.set_dirty();
+        tile.thermal_energy -= prev_tile.thermal_energy / 2.0;
+    }
 
     // Redistribute the gases into normal-size tiles.
     let mut left: f32 = 0.0;
