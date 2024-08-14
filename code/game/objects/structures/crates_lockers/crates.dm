@@ -173,12 +173,14 @@
 	damage_deflection = 25
 	broken = FALSE
 	locked = TRUE
+	var/sealed = FALSE
 	can_be_emaged = TRUE
 	crate_value = 25 // rarer and cannot be crafted, bonus credits for exporting them
 
 	var/redlight = "securecrater"
 	var/greenlight = "securecrateg"
 	var/emag = "securecrateemag"
+	var/seal = "securecrateccseal"
 
 	var/tamperproof = FALSE
 
@@ -186,6 +188,9 @@
 	. = ..()
 	if(broken)
 		. += emag
+		return
+	if(sealed)
+		. += seal
 		return
 	if(locked)
 		. += redlight
@@ -306,9 +311,19 @@
 		return FALSE
 	return TRUE
 
+/obj/structure/closet/crate/secure/personal/togglelock(mob/user)
+	if(sealed)
+		prompt_to_remove_seal(user)
+		return FALSE
+	return ..()
+
 /obj/structure/closet/crate/secure/personal/attackby(obj/item/I, mob/user, params)
 	if(opened || !istype(I, /obj/item/card/id))
 		return ..()
+
+	if(sealed)
+		prompt_to_remove_seal(user)
+		return FALSE
 
 	if(broken)
 		to_chat(user, "<span class='warning'>It appears to be broken.</span>")
@@ -332,6 +347,24 @@
 		return ..()
 
 	return FALSE
+
+/obj/structure/closet/crate/secure/personal/proc/seal()
+	if(opened || broken || !locked)
+		return FALSE
+	sealed = TRUE
+	update_icon()
+	return TRUE
+
+/obj/structure/closet/crate/secure/personal/proc/prompt_to_remove_seal(mob/user)
+	var/response = tgui_alert(user, "The locking mechanism is covered by a seal that says \"Property of Nanotrasen Central Command. Breaking this seal without explicit CC permission is considered Grand Theft.\"", "Break the seal?", list("Break the seal", "Leave it alone"))
+	if(response == "Break the seal")
+		sealed = FALSE
+		update_icon()
+
+/obj/structure/closet/crate/secure/personal/emag_act(mob/user)
+	if(sealed)
+		sealed = FALSE
+	. = ..()
 
 /obj/structure/closet/crate/plastic
 	name = "plastic crate"
