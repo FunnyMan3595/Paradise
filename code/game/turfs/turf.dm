@@ -360,12 +360,13 @@
 	prepare_huds()
 
 	var/image/holder = hud_list[PRESSURE_HUD]
-	if(!isnull(SSpressure.current["[x],[y],[z]"]))
-		holder.icon = SSpressure.current["[x],[y],[z]"]
+	if(!isnull(SSair.current_pressure_icons["[x],[y],[z]"]))
+		holder.icon = SSair.current_pressure_icons["[x],[y],[z]"]
+	holder.alpha = 175
 	holder.plane = ABOVE_LIGHTING_PLANE
 	holder.blend_mode = BLEND_MULTIPLY
 	holder.appearance_flags = RESET_COLOR | RESET_ALPHA | RESET_TRANSFORM | PIXEL_SCALE
-	holder.transform = matrix(world.icon_size, MATRIX_SCALE)
+	holder.transform = matrix(world.icon_size, 0, 0, 0, -world.icon_size, 0)
 	holder.pixel_x = world.icon_size * (PRESSURE_HUD_TILE_SIZE / 2 - 0.5)
 	holder.pixel_y = world.icon_size * (PRESSURE_HUD_TILE_SIZE / 2 - 0.5)
 

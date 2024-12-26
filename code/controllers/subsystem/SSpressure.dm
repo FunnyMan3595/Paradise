@@ -8,8 +8,8 @@ SUBSYSTEM_DEF(pressure)
 	offline_implications = "Pressure HUD will no longer work."
 	cpu_display = SS_CPUDISPLAY_LOW
 
-	var/x = 1
-	var/y = 1
+	var/x = 0
+	var/y = 0
 	var/z = 1
 
 	var/list/current = list()
@@ -38,54 +38,25 @@ SUBSYSTEM_DEF(pressure)
 	var/timer = TICK_USAGE_REAL
 
 	if(!resumed)
-		x = 1
-		y = 1
-		z = 1
+		x = 0
+		y = 0
+		z = 0
 
-		for(var/origin_z in 1 to world.maxz)
-			for(var/origin_y in 0 to (world.maxy - 1) / PRESSURE_HUD_TILE_SIZE)
-				for(var/origin_x in 0 to (world.maxx - 1) / PRESSURE_HUD_TILE_SIZE)
-					var/icon/canvas = new('icons/effects/effects.dmi', "white")
-					var/turf/origin = locate(1 + origin_x * PRESSURE_HUD_TILE_SIZE, 1 + origin_y * PRESSURE_HUD_TILE_SIZE, origin_z)
-					next["[origin.x],[origin.y],[origin.z]"] = canvas
-
-	var/datum/atom_hud/data/pressure/hud = GLOB.huds[DATA_HUD_PRESSURE]
 	while(z <= world.maxz)
-		var/icon/canvas = next[pressure_hud_origin_key(x, y, z)]
-		while(y <= world.maxy)
-			if(y % PRESSURE_HUD_TILE_SIZE == 1)
-				canvas = next[pressure_hud_origin_key(x, y, z)]
-			while(x <= world.maxx)
-				if(x % PRESSURE_HUD_TILE_SIZE == 1)
-					canvas = next[pressure_hud_origin_key(x, y, z)]
-				// Set the turf's pixel in the next tick's image.
-				set_pixel(canvas, locate(x, y, z))
+		while(y <=  (world.maxy - 1) / PRESSURE_HUD_TILE_SIZE)
+			while(x <= (world.maxx - 1) / PRESSURE_HUD_TILE_SIZE)
+				var/turf/origin = locate(1 + x * PRESSURE_HUD_TILE_SIZE, 1 + y * PRESSURE_HUD_TILE_SIZE, 1 + z)
+				var/image/screen = origin.hud_list[PRESSURE_HUD]
+
+				var/icon/pressure_icon = new("data/milla/pressure_[x]_[y]_[z].png")
+				current["[x],[y],[z]"] = pressure_icon
+				screen.icon = pressure_icon
 				x++
 				if(MC_TICK_CHECK)
 					return
-			x = 1
+			x = 0
 			y++
-
-		// Next tick's image is done, copy it onto the HUD.
-		for(var/origin_y in 0 to (world.maxy - 1) / PRESSURE_HUD_TILE_SIZE)
-			for(var/origin_x in 0 to (world.maxx - 1) / PRESSURE_HUD_TILE_SIZE)
-				var/turf/origin = locate(1 + origin_x * PRESSURE_HUD_TILE_SIZE, 1 + origin_y * PRESSURE_HUD_TILE_SIZE, z)
-				hud.remove_from_hud(origin)
-				var/image/screen = origin.hud_list[PRESSURE_HUD]
-				screen.icon = next["[origin.x],[origin.y],[origin.z]"]
-				current["[origin.x],[origin.y],[origin.z]"] = screen.icon
-				hud.add_to_hud(origin)
-
-		y = 1
+		y = 0
 		z++
 
 	cost = TICK_DELTA_TO_MS(TICK_USAGE_REAL - timer)
-
-/// Colors a single pixel in the next tick of the pressure HUD.
-/datum/controller/subsystem/pressure/proc/set_pixel(icon/canvas, turf/T)
-	var/datum/gas_mixture/air = T.get_readonly_air()
-	var/ratio = min(1, air.return_pressure() / ONE_ATMOSPHERE)
-	canvas.DrawBox(rgb(255 * (1 - ratio), 0, 255 * ratio), (T.x - 1) % PRESSURE_HUD_TILE_SIZE + 1, (T.y - 1) % PRESSURE_HUD_TILE_SIZE + 1)
-
-/datum/controller/subsystem/pressure/proc/pressure_hud_origin_key(tile_x, tile_y, tile_z)
-	return "[PRESSURE_HUD_COORD(tile_x)],[PRESSURE_HUD_COORD(tile_y)],[tile_z]"

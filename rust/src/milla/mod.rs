@@ -10,6 +10,7 @@ mod api;
 mod constants;
 mod conversion;
 mod model;
+mod pressure_icon;
 mod simulate;
 mod statics;
 mod tick;

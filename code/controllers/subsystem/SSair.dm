@@ -5,7 +5,8 @@
 #define SSAIR_HOTSPOTS 5
 #define SSAIR_WINDY_TILES 6
 #define SSAIR_BOUND_MIXTURES 7
-#define SSAIR_MILLA_TICK 8
+#define SSAIR_LOAD_PRESSURE_ICONS 8
+#define SSAIR_MILLA_TICK 9
 
 SUBSYSTEM_DEF(air)
 	name = "Atmospherics"
@@ -37,6 +38,8 @@ SUBSYSTEM_DEF(air)
 	var/datum/resumable_cost_counter/cost_pipenets_to_build = new()
 	/// The cost of a pass through atmos machinery, shown in SS Info's C block as AM.
 	var/datum/resumable_cost_counter/cost_atmos_machinery = new()
+	/// The cost of a pass through loading pressure icons, shown in SS Info's C block as PI.
+	var/datum/resumable_cost_counter/cost_pressure_icons = new()
 
 	/// The set of current bound mixtures. Shown in SS Info as BM:x+y, where x is the length at the start of the most recent processing, and y is the number of mixtures that have been added during processing.
 	var/list/bound_mixtures = list()
@@ -85,6 +88,14 @@ SUBSYSTEM_DEF(air)
 	/// A list of callbacks waiting for MILLA to finish its tick and enter synchronous mode.
 	var/list/waiting_for_sync = list()
 
+	/// The coordinates of the pressure image we're currently loading.
+	var/pressure_x = 0
+	var/pressure_y = 0
+	var/pressure_z = 0
+
+	/// The most recently loaded pressure icons.
+	var/list/current_pressure_icons = list()
+
 /// A cost counter for resumable, repeating processes.
 /datum/resumable_cost_counter
 	var/last_complete_ms = 0
@@ -119,7 +130,8 @@ SUBSYSTEM_DEF(air)
 	msg += "WT:[cost_windy_tiles.to_string()]|"
 	msg += "PN:[cost_pipenets.to_string()]|"
 	msg += "PTB:[cost_pipenets_to_build.to_string()]|"
-	msg += "AM:[cost_atmos_machinery.to_string()]"
+	msg += "AM:[cost_atmos_machinery.to_string()]|"
+	msg += "PI:[cost_pressure_icons.to_string()]"
 	msg += "} "
 	msg += "BM:[original_bound_mixtures]+[added_bound_mixtures]|"
 	msg += "IT:[interesting_tile_count]|"
@@ -149,6 +161,12 @@ SUBSYSTEM_DEF(air)
 	for(var/obj/machinery/atmospherics/A in machinery_to_construct)
 		A.initialize_atmos_network()
 
+	for(var/origin_z in 1 to world.maxz)
+		for(var/origin_y in 0 to (world.maxy - 1) / PRESSURE_HUD_TILE_SIZE)
+			for(var/origin_x in 0 to (world.maxx - 1) / PRESSURE_HUD_TILE_SIZE)
+				var/turf/origin = locate(1 + origin_x * PRESSURE_HUD_TILE_SIZE, 1 + origin_y * PRESSURE_HUD_TILE_SIZE, origin_z)
+				current_pressure_icons["[origin.x],[origin.y],[origin.z]"] = origin.setup_pressure_hud()
+
 	in_milla_safe_code = FALSE
 
 /datum/controller/subsystem/air/Recover()
@@ -160,23 +178,23 @@ SUBSYSTEM_DEF(air)
 	currentpart = SSair.currentpart
 	is_synchronous = SSair.is_synchronous
 
+#define SLEEPABLE_TIMER (world.time + world.tick_usage * world.tick_lag / 100)
 /datum/controller/subsystem/air/fire(resumed = 0)
 	// All atmos stuff assumes MILLA is synchronous. Ensure it actually is.
 	if(!is_synchronous)
-		var/timer = TICK_USAGE_REAL
+		var/timer = SLEEPABLE_TIMER
 
 		while(!is_synchronous)
 			// Sleep for 1ms.
 			sleep(0.01)
 			if(MC_TICK_CHECK)
-				time_slept.record_progress(TICK_DELTA_TO_MS(TICK_USAGE_REAL - timer), FALSE)
-				cost_full.record_progress(TICK_DELTA_TO_MS(TICK_USAGE_REAL - timer), FALSE)
+				time_slept.record_progress((SLEEPABLE_TIMER - timer) * 100, FALSE)
 				return
 
-		cost_full.record_progress(TICK_DELTA_TO_MS(TICK_USAGE_REAL - timer), FALSE)
-		time_slept.record_progress(TICK_DELTA_TO_MS(TICK_USAGE_REAL - timer), TRUE)
+		time_slept.record_progress((SLEEPABLE_TIMER - timer) * 100, TRUE)
 
 	fire_sleepless(resumed)
+#undef SLEEPABLE_TIMER
 
 /datum/controller/subsystem/air/proc/fire_sleepless(resumed)
 	// Any proc that wants MILLA to be synchronous should not sleep.
@@ -269,6 +287,19 @@ SUBSYSTEM_DEF(air)
 		process_bound_mixtures(resumed)
 
 		cost_bound_mixtures.record_progress(TICK_DELTA_TO_MS(TICK_USAGE_REAL - timer), state != SS_PAUSED && state != SS_PAUSING)
+		cost_full.record_progress(TICK_DELTA_TO_MS(TICK_USAGE_REAL - timer), FALSE)
+		if(state == SS_PAUSED || state == SS_PAUSING)
+			in_milla_safe_code = FALSE
+			return
+		resumed = 0
+		currentpart = SSAIR_LOAD_PRESSURE_ICONS
+
+	if(currentpart == SSAIR_LOAD_PRESSURE_ICONS)
+		timer = TICK_USAGE_REAL
+
+		load_pressure_icons(resumed)
+
+		cost_pressure_icons.record_progress(TICK_DELTA_TO_MS(TICK_USAGE_REAL - timer), state != SS_PAUSED && state != SS_PAUSING)
 		cost_full.record_progress(TICK_DELTA_TO_MS(TICK_USAGE_REAL - timer), FALSE)
 		if(state == SS_PAUSED || state == SS_PAUSING)
 			in_milla_safe_code = FALSE
@@ -459,6 +490,42 @@ SUBSYSTEM_DEF(air)
 			return
 
 	windy_tiles = new_windy_tiles
+
+/datum/controller/subsystem/air/proc/load_pressure_icons(resumed = 0)
+	// Make sure we've finished a tick before trying to load icons.
+	if(times_fired < 2)
+		return
+
+	if(!resumed)
+		pressure_x = 0
+		pressure_y = 0
+		pressure_z = 0
+
+	var/datum/atom_hud/data/pressure/hud = GLOB.huds[DATA_HUD_PRESSURE]
+	while(pressure_z < world.maxz)
+		while(pressure_y <=  (world.maxy - 1) / PRESSURE_HUD_TILE_SIZE)
+			while(pressure_x <= (world.maxx - 1) / PRESSURE_HUD_TILE_SIZE)
+				var/turf/origin = locate(1 + pressure_x * PRESSURE_HUD_TILE_SIZE, 1 + pressure_y * PRESSURE_HUD_TILE_SIZE, 1 + pressure_z)
+				var/image/screen = origin.hud_list[PRESSURE_HUD]
+
+				var/icon_filename = "data/milla/pressure_[pressure_x]_[pressure_y]_[pressure_z].png"
+				var/icon/pressure_icon = new(icon_filename)
+				current_pressure_icons["[pressure_x],[pressure_y],[pressure_z]"] = pressure_icon
+
+				// Tell everyone to load it.
+				for(var/mob/user in hud.hudusers)
+					user << load_resource(icon_filename, 1)
+				// Swap the icon a bit later, so they have time to load it.
+				spawn(5)
+					screen.icon = pressure_icon
+
+				pressure_x++
+				if(MC_TICK_CHECK)
+					return
+			pressure_x = 0
+			pressure_y++
+		pressure_y = 0
+		pressure_z++
 
 /datum/controller/subsystem/air/proc/process_bound_mixtures(resumed = 0)
 	if(!resumed)
@@ -676,4 +743,5 @@ SUBSYSTEM_DEF(air)
 #undef SSAIR_HOTSPOTS
 #undef SSAIR_WINDY_TILES
 #undef SSAIR_BOUND_MIXTURES
+#undef SSAIR_LOAD_PRESSURE_ICONS
 #undef SSAIR_MILLA_TICK
