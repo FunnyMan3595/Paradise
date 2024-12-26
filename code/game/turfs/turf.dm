@@ -351,6 +351,29 @@
 		for(var/obj/structure/cable/C in contents)
 			qdel(C)
 
+	// Key tiles get a pressure HUD.
+	if(IS_PRESSURE_HUD_ORIGIN(x, y))
+		setup_pressure_hud()
+
+/turf/proc/setup_pressure_hud()
+	hud_possible = list(PRESSURE_HUD)
+	prepare_huds()
+
+	var/image/holder = hud_list[PRESSURE_HUD]
+	if(!isnull(SSpressure.current["[x],[y],[z]"]))
+		holder.icon = SSpressure.current["[x],[y],[z]"]
+	holder.plane = ABOVE_LIGHTING_PLANE
+	holder.blend_mode = BLEND_MULTIPLY
+	holder.appearance_flags = RESET_COLOR | RESET_ALPHA | RESET_TRANSFORM | PIXEL_SCALE
+	holder.transform = matrix(world.icon_size, MATRIX_SCALE)
+	holder.pixel_x = world.icon_size * (PRESSURE_HUD_TILE_SIZE / 2 - 0.5)
+	holder.pixel_y = world.icon_size * (PRESSURE_HUD_TILE_SIZE / 2 - 0.5)
+
+	var/datum/atom_hud/data/pressure/hud = GLOB.huds[DATA_HUD_PRESSURE]
+	hud.add_to_hud(src)
+
+	return holder.icon
+
 /turf/simulated/AfterChange(ignore_air = FALSE, keep_cabling = FALSE)
 	..()
 	RemoveLattice()

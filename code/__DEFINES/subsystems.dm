@@ -86,6 +86,7 @@
 #define INIT_ORDER_PATH -50
 #define INIT_ORDER_PERSISTENCE -95
 #define INIT_ORDER_STATPANELS -98
+#define INIT_ORDER_PRESSURE -99
 #define INIT_ORDER_CHAT -100 // Should be last to ensure chat remains smooth during init.
 
 // Subsystem fire priority, from lowest to highest priority
@@ -98,6 +99,7 @@
 #define FIRE_PRIORITY_TICKETS		10
 #define FIRE_PRIORITY_RESEARCH		10 // SoonTM
 #define FIRE_PRIORITY_AMBIENCE		10
+#define FIRE_PRIORITY_PRESSURE		10
 #define FIRE_PRIORITY_GARBAGE		15
 #define FIRE_PRIORITY_AIR			20
 #define FIRE_PRIORITY_NPC			20

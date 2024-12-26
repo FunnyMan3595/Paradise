@@ -60,6 +60,9 @@
 /datum/atom_hud/data/janitor
 	hud_icons = list(JANI_HUD)
 
+/datum/atom_hud/data/pressure
+	hud_icons = list(PRESSURE_HUD)
+
 /* MED/SEC/DIAG HUD HOOKS */
 
 /*

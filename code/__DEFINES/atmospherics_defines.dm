@@ -169,3 +169,7 @@
 #define ENVIRONMENT_TEMPERATE "temperate"
 /// Cold environment: Normal atmosphere, -93 C.
 #define ENVIRONMENT_COLD "cold"
+
+#define PRESSURE_HUD_TILE_SIZE 32
+#define IS_PRESSURE_HUD_ORIGIN(x, y) (x % PRESSURE_HUD_TILE_SIZE == 1 && y % PRESSURE_HUD_TILE_SIZE == 1)
+#define PRESSURE_HUD_COORD(coord) (1 + floor((coord - 1) / PRESSURE_HUD_TILE_SIZE) * PRESSURE_HUD_TILE_SIZE)
