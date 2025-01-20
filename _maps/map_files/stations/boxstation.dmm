@@ -65617,6 +65617,10 @@
 	},
 /turf/simulated/floor/plating,
 /area/station/maintenance/asmaint2)
+"mFx" = (
+/obj/structure/marker_beacon/dock_marker,
+/turf/space,
+/area/space)
 "mFy" = (
 /obj/machinery/door/window/classic/reversed{
 	name = "Kill Chamber"
@@ -77015,6 +77019,17 @@
 /obj/structure/disposalpipe/segment,
 /turf/simulated/floor/plating,
 /area/station/maintenance/apmaint)
+"swM" = (
+/obj/docking_port/stationary{
+	dir = 8;
+	dwidth = 20;
+	height = 60;
+	id = "repair_dock";
+	name = "repair dock";
+	width = 40
+	},
+/turf/space,
+/area/space)
 "sxv" = (
 /obj/machinery/economy/vending/boozeomat,
 /turf/simulated/floor/plasteel{
@@ -93206,48 +93221,48 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
 aaa
+mFx
+aaa
+aaa
+aaa
+mFx
+aaa
+aaa
+aaa
+mFx
 aaa
 aaa
 aaa
 aaa
+mFx
+aaa
+aaa
+aaa
+mFx
+aaa
+aaa
+aaa
+mFx
 aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
 aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -94491,6 +94506,7 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
@@ -94531,8 +94547,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -95776,6 +95791,7 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
@@ -95816,8 +95832,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -97318,6 +97333,7 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
@@ -97358,8 +97374,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -98603,6 +98618,7 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
@@ -98643,8 +98659,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -99631,6 +99646,7 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
@@ -99671,8 +99687,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -100659,6 +100674,7 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
@@ -100699,8 +100715,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -101944,6 +101959,7 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
@@ -101984,8 +102000,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -103486,6 +103501,7 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
@@ -103526,8 +103542,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -104771,6 +104786,7 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
@@ -104811,8 +104827,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -106056,6 +106071,7 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
@@ -106096,8 +106112,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -107341,6 +107356,7 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
@@ -107381,8 +107397,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -108381,7 +108396,7 @@ aaa
 aaa
 aaa
 aaa
-abp
+aaa
 aaa
 aaa
 aaa
@@ -108646,7 +108661,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
+swM
 aaa
 aaa
 aaa
@@ -108883,48 +108898,48 @@ aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
 aaa
+mFx
+aaa
+aaa
+aaa
+mFx
+aaa
+aaa
+aaa
+mFx
 aaa
 aaa
 aaa
 aaa
+mFx
+aaa
+aaa
+aaa
+mFx
+aaa
+aaa
+aaa
+mFx
 aaa
 aaa
 aaa
 aaa
+mFx
 aaa
 aaa
 aaa
 aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
-aaa
+mFx
 aaa
 aaa
 aaa
@@ -109152,7 +109167,7 @@ aaa
 aaa
 aaa
 aaa
-aaa
+abp
 aaa
 aaa
 aaa
