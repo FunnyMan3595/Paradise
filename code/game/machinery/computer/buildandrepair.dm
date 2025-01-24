@@ -334,6 +334,12 @@
 	build_path = /obj/machinery/computer/monitor
 	origin_tech = "programming=2;powerstorage=2"
 
+/obj/item/circuitboard/starship_repair
+	board_name = "Starship Repair Console"
+	icon_state = "engineering"
+	build_path = /obj/machinery/computer/starship_repair
+	origin_tech = "programming=2;engineering=2"
+
 /obj/item/circuitboard/powermonitor/secret
 	board_name = "Outdated Power Monitor"
 	icon_state = "engineering"

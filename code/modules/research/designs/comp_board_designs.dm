@@ -212,6 +212,16 @@
 	build_path = /obj/item/circuitboard/powermonitor
 	category = list("Computer Boards")
 
+/datum/design/starship_repair
+	name = "Console Board (Starship Repair Console)"
+	desc = "Allows for the construction of circuit boards used to build a new starship repair console."
+	id = "starship_repair"
+	req_tech = list("programming" = 2, "engineering" = 2)
+	build_type = IMPRINTER
+	materials = list(MAT_GLASS = 1000)
+	build_path = /obj/item/circuitboard/starship_repair
+	category = list("Computer Boards")
+
 /datum/design/prisonmanage
 	name = "Console Board (Prisoner Management Console)"
 	desc = "Allows for the construction of circuit boards used to build a prisoner management console."

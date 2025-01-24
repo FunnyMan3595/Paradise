@@ -10,7 +10,8 @@
 	dwidth = 20;
 	height = 60;
 	id = "damaged_ship";
-	rebuildable = 1
+	rebuildable = 1;
+	timid = 1
 	},
 /turf/simulated/floor/plating/airless,
 /area/space)
