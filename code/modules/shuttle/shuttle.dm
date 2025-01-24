@@ -229,6 +229,10 @@
 	var/lockeddown = FALSE
 	/// Is this a shuttle that completely destroys whatever dares to get in it's way?
 	var/lance_docking = FALSE
+	/// How long should the ripple effects at our target port last?
+	var/ripple_duration = SHUTTLE_RIPPLE_TIME
+	/// Should we enter transit space while moving?
+	var/should_transit = TRUE
 
 /obj/docking_port/mobile/Initialize(mapload)
 	. = ..()
@@ -406,7 +410,10 @@
 /obj/docking_port/mobile/proc/create_ripples(obj/docking_port/stationary/S1)
 	var/list/turfs = ripple_area(S1)
 	for(var/i in turfs)
-		ripples += new /obj/effect/temp_visual/ripple(i)
+		var/obj/effect/ripple/ripple = new(i)
+		ripples += ripple
+		ripple.duration = ripple_duration
+		ripple.start()
 
 /obj/docking_port/mobile/proc/remove_ripples()
 	if(length(ripples))
@@ -718,7 +725,8 @@
 			if(SHUTTLE_IGNITING)
 				mode = SHUTTLE_CALL
 				setTimer(callTime)
-				enterTransit()
+				if(should_transit)
+					enterTransit()
 				return
 		mode = SHUTTLE_IDLE
 		timer = 0
@@ -728,7 +736,7 @@
 	if(!length(ripples))
 		if((mode == SHUTTLE_CALL) || (mode == SHUTTLE_RECALL))
 			var/tl = timeLeft(1)
-			if(tl <= SHUTTLE_RIPPLE_TIME)
+			if(tl <= ripple_duration)
 				create_ripples(destination)
 
 /obj/docking_port/mobile/proc/setTimer(wait)

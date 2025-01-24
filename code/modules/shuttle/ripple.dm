@@ -1,4 +1,4 @@
-/obj/effect/temp_visual/ripple
+/obj/effect/ripple
 	name = "hyperspace ripple"
 	desc = "Something is coming through hyperspace, you can see the \
 		visual disturbances. It's probably best not to be on top of these \
@@ -12,17 +12,15 @@
 	smoothing_groups = list(SMOOTH_GROUP_RIPPLE)
 	canSmoothWith = list(SMOOTH_GROUP_RIPPLE)
 	layer = RIPPLE_LAYER
-	alpha = 0
-	duration = 3 * SHUTTLE_RIPPLE_TIME
+	alpha = 50
 	mouse_opacity = MOUSE_OPACITY_ICON
+	var/duration = SHUTTLE_RIPPLE_TIME
 
-/obj/effect/temp_visual/ripple/New()
-	. = ..()
+/obj/effect/ripple/proc/start()
 	QUEUE_SMOOTH(src)
-	animate(src, alpha=255, time=SHUTTLE_RIPPLE_TIME)
+	animate(src, alpha=255, time=duration)
 
-
-/obj/effect/temp_visual/ripple/lance_crush
+/obj/effect/ripple/lance_crush
 	name = "collision lights"
 	desc = "Something is coming through hyperspace in a very unsafe way. You *really* do not want to be standing here."
 	icon = 'icons/turf/walls/hierophant_wall_temp.dmi'

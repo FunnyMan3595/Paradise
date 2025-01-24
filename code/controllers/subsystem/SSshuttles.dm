@@ -334,7 +334,7 @@ SUBSYSTEM_DEF(shuttle)
 			if(player_load)
 				return "Already in transit."
 			else
-				return "A player is loading a shuttle, wait a few seconds."
+				return "A player is loading a shuttle, wait for it to finish."
 		if(SHUTTLE_IMPORTING_ADMIN)
 			delete_imported_shuttle()
 			load_template(S)

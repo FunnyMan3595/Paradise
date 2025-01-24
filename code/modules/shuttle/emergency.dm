@@ -564,7 +564,9 @@
 
 /obj/docking_port/mobile/emergency/proc/create_lance_ripples(list/L2, obj/docking_port/stationary/S1)
 	for(var/turf/T in L2)
-		ripples += new /obj/effect/temp_visual/ripple/lance_crush(T)
+		var/obj/effect/ripple/lance_crush/ripple = new(T)
+		ripples += ripple
+		ripple.start()
 
 // This basically opens a big-ass row of blast doors when the shuttle arrives at centcom
 /obj/docking_port/mobile/pod
