@@ -347,7 +347,6 @@ SUBSYSTEM_DEF(shuttle)
 
 /// Load a shuttle in at the appropriate landmark. The resulting shuttle will be `SSshuttle.imported_shuttle`
 /datum/controller/subsystem/shuttle/proc/load_template(datum/map_template/shuttle/S)
-	stack_trace("Shuttle load")
 	if(shuttle_import_status == SHUTTLE_IMPORTING_MAPLOAD)
 		CRASH("A shuttle was already loading when another was loaded")
 	shuttle_import_status = SHUTTLE_IMPORTING_MAPLOAD
