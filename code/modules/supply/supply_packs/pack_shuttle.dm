@@ -36,7 +36,7 @@
 	// check here so people don't spend their money on it
 	return (SSshuttle.emergency?.mode == SHUTTLE_IDLE)
 
-/datum/supply_packs/abstract/shuttle/on_order_confirm(datum/supply_order/order)
+/datum/supply_packs/abstract/shuttle/on_order_confirm(datum/supply_order/order, atom/movable/console)
 	. = ..()
 	if(SSshuttle.custom_shuttle_ordered)
 		return
@@ -53,9 +53,12 @@
 			continue
 		SP.special_enabled = FALSE
 	SSshuttle.custom_shuttle_ordered = TRUE
-	var/obj/docking_port/mobile/shuttle = SSshuttle.load_template(template)
-	shuttle.shuttle_speed_factor = speed_factor
-	SSshuttle.replace_shuttle(shuttle)
+	var/error = SSshuttle.try_load_template(template, TRUE)
+	if(istext(error))
+		console.audible_message("<span class='warning'>[console] buzzes, \"[error]\"</span>")
+		return
+	SSshuttle.replace_shuttle()
+	SSshuttle.emergency.shuttle_speed_factor = speed_factor
 	SSshuttle.emergency_locked_in = TRUE
 	return TRUE
 

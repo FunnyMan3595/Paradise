@@ -569,6 +569,11 @@
 
 	mobile_port.unlockPortDoors(S1)
 
+	/// If we were in the loading spot, clear it.
+	if(SSshuttle.imported_shuttle == mobile_port)
+		SSshuttle.imported_shuttle = null
+		SSshuttle.shuttle_import_status = SHUTTLE_IMPORTING_NONE
+
 /obj/docking_port/mobile/proc/is_turf_blacklisted_for_transit(turf/T)
 	var/static/list/blacklisted_turf_types = typecacheof(list(/turf/space, /turf/simulated/floor/chasm, /turf/simulated/floor/lava, /turf/simulated/floor/plating/asteroid))
 	return is_type_in_typecache(T, blacklisted_turf_types)

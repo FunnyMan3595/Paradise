@@ -406,7 +406,7 @@
 			if(attempt_account_authentification(account, user, account.account_pin))
 				if(pay_with_account(account, pack.get_cost(), "[pack.name] Crate Purchase", "[src]", user, account_database.vendor_account))
 					order.requires_head_approval = FALSE
-					SSeconomy.process_supply_order(order, TRUE)
+					SSeconomy.process_supply_order(order, TRUE, src)
 					if(istype(order.object, /datum/supply_packs/abstract/shuttle))
 						update_static_data(user) // pack is going to be disabled, need to update pack data
 					SStgui.update_uis(src)

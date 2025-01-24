@@ -242,7 +242,7 @@ SUBSYSTEM_DEF(economy)
 	var/datum/supply_order/order = pack.create_order(orderedby, occupation, comment, ordernum++)
 	return order
 
-/datum/controller/subsystem/economy/proc/process_supply_order(datum/supply_order/order, paid_for)
+/datum/controller/subsystem/economy/proc/process_supply_order(datum/supply_order/order, paid_for, console)
 	if(!order)
 		CRASH("process_supply_order() called with a null datum/supply_order")
 
@@ -260,19 +260,19 @@ SUBSYSTEM_DEF(economy)
 
 	//if purchaser has already paid it means it's fully approved, finalize order
 	if(paid_for)
-		finalize_supply_order(order) //if payment was succesful, add order to shoppinglist
+		finalize_supply_order(order, console) //if payment was succesful, add order to shoppinglist
 		return TRUE
 	log_debug("process_supply_order() called on Crate [order.ordernum] ordered by [order.orderedby] but isn't paid for and doesn't need approval, deleting")
 	qdel(order) //only the strong will survive
 	return FALSE
 
-/datum/controller/subsystem/economy/proc/finalize_supply_order(datum/supply_order/order)
+/datum/controller/subsystem/economy/proc/finalize_supply_order(datum/supply_order/order, console)
 	if(!order)
 		CRASH("finalize_supply_order() called with a null datum/supply_order")
 	if(order in request_list)
 		request_list -= order
 
-	order.object.on_order_confirm(order)
+	order.object.on_order_confirm(order, console)
 
 	// Abstract orders won't get added to the shuttle delivery list -- if they're finalized, they're getting processed here and now.
 	if(istype(order.object, /datum/supply_packs/abstract))

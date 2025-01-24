@@ -33,11 +33,10 @@ SUBSYSTEM_DEF(shuttle)
 	var/refuel_delay = 20 MINUTES
 	/// Whether or not a custom shuttle has been ordered.
 	var/custom_shuttle_ordered = FALSE
-	// These vars are necessary to prevent multiple loads on the same turfs at the same times causing massive server issues
-	/// Whether or not a custom shuttle is currently loading at centcomm.
-	var/custom_escape_shuttle_loading = FALSE
-	/// Whether or not a shuttle is currently being loaded at the template landmark, if it exists.
-	var/loading_shuttle_at_preview_template = FALSE
+	/// What's happening at the shuttle import location?
+	var/shuttle_import_status = SHUTTLE_IMPORTING_NONE
+	/// The shuttle currently at the shuttle import location, if any.
+	var/obj/docking_port/mobile/imported_shuttle = null
 	/// Have we locked in the emergency shuttle, to prevent people from breaking things / wasting player money?
 	var/emergency_locked_in = FALSE
 
@@ -316,15 +315,45 @@ SUBSYSTEM_DEF(shuttle)
 	var/turf/spawn_location = pick(supply_shuttle_turfs)
 	new /obj/structure/closet/crate/mail(spawn_location)
 
-// load an alternative shuttle in at the appropriate landmark.
+/// Attempts to load in a shuttle. Returns either the shuttle or an error message.
+/datum/controller/subsystem/shuttle/proc/try_load_template(datum/map_template/shuttle/S, player_load = TRUE)
+	switch(shuttle_import_status)
+		if(SHUTTLE_IMPORTING_NONE)
+			load_template(S)
+			if(player_load)
+				shuttle_import_status = SHUTTLE_IMPORTING_PLAYER
+			else
+				shuttle_import_status = SHUTTLE_IMPORTING_ADMIN
+			return
+		if(SHUTTLE_IMPORTING_MAPLOAD)
+			if(player_load)
+				return "Communication error. Please try again in a few seconds."
+			else
+				return "Mapload in progress, wait a few seconds."
+		if(SHUTTLE_IMPORTING_PLAYER)
+			if(player_load)
+				return "Already in transit."
+			else
+				return "A player is loading a shuttle, wait a few seconds."
+		if(SHUTTLE_IMPORTING_ADMIN)
+			delete_imported_shuttle()
+			load_template(S)
+			if(player_load)
+				shuttle_import_status = SHUTTLE_IMPORTING_PLAYER
+			else
+				shuttle_import_status = SHUTTLE_IMPORTING_ADMIN
+		else
+			return "Unhandled situation, ahelp or contact a coder."
+
+/// Load a shuttle in at the appropriate landmark. The resulting shuttle will be `SSshuttle.imported_shuttle`
 /datum/controller/subsystem/shuttle/proc/load_template(datum/map_template/shuttle/S)
-	// load shuttle template, centred at shuttle import landmark,
-	if(loading_shuttle_at_preview_template)
-		CRASH("A shuttle was already loading at the preview template when another was loaded")
+	stack_trace("Shuttle load")
+	if(shuttle_import_status == SHUTTLE_IMPORTING_MAPLOAD)
+		CRASH("A shuttle was already loading when another was loaded")
+	shuttle_import_status = SHUTTLE_IMPORTING_MAPLOAD
 
 	S.preload()
 
-	loading_shuttle_at_preview_template = TRUE
 	var/turf/landmark_turf = get_turf(locate("landmark*Shuttle Import"))
 	S.load(landmark_turf, centered = TRUE)
 
@@ -351,78 +380,93 @@ SUBSYSTEM_DEF(shuttle)
 					// This is a bad thing.
 					WARNING("Template [S] is non-timid! Unloading.")
 					port.jumpToNullSpace()
-					loading_shuttle_at_preview_template = FALSE
 					return
 
 			if(istype(P, /obj/docking_port/stationary))
 				log_world("Map warning: Shuttle Template [S.mappath] has a stationary docking port.")
 
 	if(port)
-		loading_shuttle_at_preview_template = FALSE
-		return port
+		imported_shuttle = port
+		return
 
-	for(var/T in affected)
-		var/turf/T0 = T
-		T0.contents = null
+	for(var/turf/T in affected)
+		T.ChangeTurf(/turf/space)
+		var/obj/effect/landmark/mark
+		for(var/thing in T.contents)
+			if(istype(thing, /obj/effect/landmark))
+				mark = thing
+				break
+		if(mark)
+			T.contents = list(mark)
+		else
+			T.contents = null
+
 
 	var/msg = "load_template(): Shuttle Template [S.mappath] has no mobile docking port. Aborting import."
 	message_admins(msg)
 	WARNING(msg)
-	loading_shuttle_at_preview_template = FALSE
 
-/// Create a new shuttle and replace the emergency shuttle with it.
-/// if loaded shuttle is passed in, a new one will not be loaded.
-/datum/controller/subsystem/shuttle/proc/replace_shuttle(obj/docking_port/mobile/loaded_shuttle)
-	if(custom_escape_shuttle_loading)
-		CRASH("A custom escape shuttle was already being loaded at centcomm when another shuttle attempted to load.")
-	custom_escape_shuttle_loading = TRUE
+/// Replace the emergency shuttle with the loaded shuttle.
+/datum/controller/subsystem/shuttle/proc/replace_shuttle()
 	// get the existing shuttle information, if any
 	var/timer = 0
 	var/mode = SHUTTLE_IDLE
 	var/obj/docking_port/stationary/dock
 
-	if(emergency)
+	if(emergency != backup_shuttle)
 		timer = emergency.timer
 		mode = emergency.mode
 		dock = emergency.get_docked()
 		if(!dock) //lance moment
 			dock = getDock("emergency_away")
 	else
-		dock = loaded_shuttle.findRoundstartDock()
+		dock = imported_shuttle.findRoundstartDock()
 
 	if(!dock)
 		var/m = "No dock found for preview shuttle, aborting."
 		WARNING(m)
-		custom_escape_shuttle_loading = FALSE
 		throw EXCEPTION(m)
 
-	var/result = loaded_shuttle.canDock(dock)
+	var/result = imported_shuttle.canDock(dock)
 	// truthy value means that it cannot dock for some reason
 	// but we can ignore the someone else docked error because we'll
 	// be moving into their place shortly
 	if((result != SHUTTLE_CAN_DOCK) && (result != SHUTTLE_SOMEONE_ELSE_DOCKED))
 
-		var/m = "Unsuccessful dock of [loaded_shuttle] ([result])."
+		var/m = "Unsuccessful dock of [imported_shuttle] ([result])."
 		message_admins(m)
 		WARNING(m)
-		custom_escape_shuttle_loading = FALSE
 		return
 
-	emergency.jumpToNullSpace()
+	shuttle_import_status = SHUTTLE_IMPORTING_MAPLOAD
+	if(emergency)
+		emergency.jumpToNullSpace()
 
-	loaded_shuttle.dock(dock)
+	imported_shuttle.dock(dock)
 
 	// Shuttle state involves a mode and a timer based on world.time, so
 	// plugging the existing shuttles old values in works fine.
-	loaded_shuttle.timer = timer
-	loaded_shuttle.mode = mode
+	imported_shuttle.timer = timer
+	imported_shuttle.mode = mode
 
-	loaded_shuttle.register()
+	imported_shuttle.register()
+	shuttle_import_status = SHUTTLE_IMPORTING_NONE
 
-	// TODO indicate to the user that success happened, rather than just
-	// blanking the modification tab
+/datum/controller/subsystem/shuttle/proc/send_imported_shuttle(obj/docking_port/stationary/port, immediate = FALSE)
+	if(isnull(imported_shuttle))
+		CRASH("Can't send a shuttle that doesn't exist!")
+	if(imported_shuttle.mode != SHUTTLE_IDLE)
+		CRASH("Shuttle already in transit.")
+	imported_shuttle.register()
+	if(immediate)
+		imported_shuttle.dock(port)
+		return
+	imported_shuttle.request(port)
 
-	custom_escape_shuttle_loading = FALSE
-	return loaded_shuttle
+/datum/controller/subsystem/shuttle/proc/delete_imported_shuttle()
+	if(!isnull(imported_shuttle))
+		imported_shuttle.jumpToNullSpace()
+	imported_shuttle = null
+	shuttle_import_status = SHUTTLE_IMPORTING_NONE
 
 #undef CALL_SHUTTLE_REASON_LENGTH

@@ -18,8 +18,6 @@
 
 	var/obj/docking_port/mobile/existing_shuttle
 
-	var/obj/docking_port/mobile/preview_shuttle
-	var/datum/map_template/shuttle/preview_template
 	var/list/templates = list()
 	var/list/shuttle_data = list()
 	anchored = TRUE
@@ -178,11 +176,11 @@
 			shuttle_and_preview_cooldown = world.time + PREVIEW_OR_SHUTTLE_SPAWN_COOLDOWN
 			var/datum/map_template/shuttle/S = GLOB.shuttle_templates[params["shuttle_id"]]
 			if(S)
-				unload_preview()
-				preview_shuttle = SSshuttle.load_template(S)
-				if(preview_shuttle)
-					preview_template = S
-					usr.forceMove(get_turf(preview_shuttle))
+				var/result = SSshuttle.try_load_template(S, FALSE)
+				if(istext(result))
+					message_admins(result)
+					return
+				usr.forceMove(get_turf(SSshuttle.imported_shuttle))
 
 		if("load")
 			shuttle_and_preview_cooldown = world.time + PREVIEW_OR_SHUTTLE_SPAWN_COOLDOWN
@@ -194,7 +192,7 @@
 					intact for round sanity.")
 			else if(S)
 				// If successful, returns the mobile docking port
-				var/obj/docking_port/mobile/mdp = action_load_old(S)
+				var/obj/docking_port/mobile/mdp = action_load(S)
 				if(mdp)
 					usr.forceMove(get_turf(mdp))
 					message_admins("[key_name_admin(usr)] loaded [mdp] with the shuttle manipulator.")
@@ -207,36 +205,10 @@
 		message_admins("The emergency shuttle has been locked in. You can not load another shuttle.")
 		return
 
-	if(preview_shuttle && (loading_template != preview_template))
-		preview_shuttle.jumpToNullSpace()
-		preview_shuttle = null
-		preview_template = null
-
-	if(!preview_shuttle)
-		preview_shuttle = SSshuttle.load_template(loading_template)
-		preview_template = loading_template
-
-	SSshuttle.replace_shuttle(preview_shuttle)
-
-	existing_shuttle = null
-	preview_shuttle = null
-	preview_template = null
-	selected = null
-
-/obj/machinery/shuttle_manipulator/proc/action_load_old(datum/map_template/shuttle/loading_template)
-	if(istype(loading_template, /datum/map_template/shuttle/emergency) && SSshuttle.emergency_locked_in)
-		message_admins("The emergency shuttle has been locked in. You can not load another shuttle.")
+	var/load_result = SSshuttle.try_load_template(loading_template, FALSE)
+	if(istext(load_result))
+		message_admins(load_result)
 		return
-
-	// Check for an existing preview
-	if(preview_shuttle && (loading_template != preview_template))
-		preview_shuttle.jumpToNullSpace()
-		preview_shuttle = null
-		preview_template = null
-
-	if(!preview_shuttle)
-		preview_shuttle = SSshuttle.load_template(loading_template)
-		preview_template = loading_template
 
 	// get the existing shuttle information, if any
 	var/timer = 0
@@ -250,48 +222,24 @@
 		if(!D) //lance moment
 			D = SSshuttle.getDock("emergency_away")
 	else
-		D = preview_shuttle.findRoundstartDock()
+		D = SSshuttle.imported_shuttle.findRoundstartDock()
 
 	if(!D)
 		var/m = "No dock found for preview shuttle, aborting."
 		WARNING(m)
 		throw EXCEPTION(m)
 
-	var/result = preview_shuttle.canDock(D)
-	// truthy value means that it cannot dock for some reason
-	// but we can ignore the someone else docked error because we'll
-	// be moving into their place shortly
-	if((result != SHUTTLE_CAN_DOCK) && (result != SHUTTLE_SOMEONE_ELSE_DOCKED))
-
-		var/m = "Unsuccessful dock of [preview_shuttle] ([result])."
-		message_admins("[m]")
-		WARNING(m)
-		return
-
-	existing_shuttle.jumpToNullSpace()
-
-	preview_shuttle.dock(D)
-	. = preview_shuttle
-
 	// Shuttle state involves a mode and a timer based on world.time, so
 	// plugging the existing shuttles old values in works fine.
-	preview_shuttle.timer = timer
-	preview_shuttle.mode = mode
+	SSshuttle.imported_shuttle.timer = timer
+	SSshuttle.imported_shuttle.mode = mode
 
-	preview_shuttle.register()
+	if(istype(loading_template, /datum/map_template/shuttle/emergency))
+		SSshuttle.replace_shuttle()
+	else
+		existing_shuttle.jumpToNullSpace()
+		SSshuttle.send_imported_shuttle(D, TRUE)
 
-	// TODO indicate to the user that success happened, rather than just
-	// blanking the modification tab
-	existing_shuttle = null
-	preview_shuttle = null
-	preview_template = null
-	selected = null
-
-	return preview_shuttle
-
-/obj/machinery/shuttle_manipulator/proc/unload_preview()
-	if(preview_shuttle)
-		preview_shuttle.jumpToNullSpace()
-	preview_shuttle = null
+	return SSshuttle.imported_shuttle
 
 #undef PREVIEW_OR_SHUTTLE_SPAWN_COOLDOWN
