@@ -8,10 +8,12 @@ SUBSYSTEM_DEF(html_templates)
 
 	var/regex/token_finder
 	var/regex/token_splitter
+	var/regex/name_matcher
 
 /datum/controller/subsystem/html_templates/Initialize()
 	token_finder = regex(@"(.*?)(\{.*?})", "g")
 	token_splitter = regex(@"(.*?)([.[\]: \"])", "g")
+	name_matcher = regex(@"^[a-zA-Z0-9_]*$")
 	for(var/typepath in typesof(/datum/html_template))
 		var/datum/html_template/template = new typepath()
 		template.Initialize()

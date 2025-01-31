@@ -1,3 +1,28 @@
+#define TAG_INVALID			0
+#define TAG_IF				1
+#define TAG_ELSE			2
+#define TAG_ENDIF			3
+#define TAG_FOR				4
+#define TAG_ENDFOR			5
+#define TAG_ALIAS			6
+#define TAG_SIMPLE			7
+#define TAG_INLINE_IF		8
+#define TAG_DEFAULT			9
+
+#define MODIFIER_NONE			0
+#define MODIFIER_NAME			1
+#define MODIFIER_REF			2
+#define MODIFIER_LITERAL		3
+#define MODIFIER_PENCODE		4
+#define MODIFIER_ADMIN_PENCODE	5
+
+#define SELECTOR_START			1
+#define SELECTOR_NAME			2
+#define SELECTOR_VAR			3
+#define SELECTOR_INDEX			4
+#define SELECTOR_QUOTED			5
+#define SELECTOR_MODIFIER 		6
+
 /datum/html_template
 	var/id
 	var/raw
@@ -41,7 +66,7 @@
 			piece = splitter.Find(raw)
 		if(piece == 0)
 			split_tag += copytext(raw, last_end)
-			return
+			break
 		else
 			last_end = splitter.next
 		split_tag += splitter.group[1]
@@ -91,43 +116,74 @@
 				var/datum/html_template_selector/selector = tag.params[1]
 				ASSERT(selector.selector_type != SELECTOR_LITERAL)
 				return tag
-			else if(split_tag[next] == ":")
-				ASSERT(length(split_tag) == next)
-				switch(split_tag[1])
-					if("name")
-						tag.tag_type = TAG_NAME
-					if("ref")
-						tag.tag_type = TAG_REF
-					if("literal")
-						tag.tag_type = TAG_LITERAL
-					if("pencode")
-						tag.tag_type = TAG_PENCODE
-					if("admin_pencode")
-						tag.tag_type = TAG_ADMIN_PENCODE
-				return tag
-			ASSERT(length(split_tag) >= next + 5)
+			ASSERT(length(split_tag) >= next + 4)
 			ASSERT(split_tag[next] == " ")
 			switch(split_tag[next + 1])
 				if("?")
+					tag.tag_type = TAG_INLINE_IF
 					ASSERT(length(split_tag) >= next + 6)
-					ASSERT(split_tag[next] = " ")
-					next = tag.parse_selector(split_tag, next + 1)
+					ASSERT(split_tag[next + 2] == " ")
+					next = tag.parse_selector(split_tag, next + 3)
 					ASSERT(length(split_tag) >= next + 4)
-					ASSERT(split_tag[next] = " ")
-					ASSERT(split_tag[next + 1] = ":")
-					ASSERT(split_tag[next + 2] = " ")
+					ASSERT(split_tag[next] == " ")
+					ASSERT(split_tag[next + 1] == ":")
+					ASSERT(split_tag[next + 2] == " ")
 					next = tag.parse_selector(split_tag, next + 3)
 					ASSERT(length(split_tag) == next - 1)
 				if("or")
-					ASSERT(length(split_tag) >= next + 9)
-					next = tag.parse_selector(split_tag, 1)
-					ASSERT(length[split_tag] >= mext + 
+					tag.tag_type = TAG_DEFAULT
+					ASSERT(length(split_tag) >= next + 4)
+					ASSERT(split_tag[next + 1] == " ")
+					ASSERT(split_tag[next + 2] == "default")
+					ASSERT(split_tag[next + 3] == " ")
+					next = tag.parse_selector(split_tag, next + 4)
+					ASSERT(length[split_tag]) == next - 1)
+				else
+					CRASH("Invalid token [split_tag[next]] after selector.")
 
-
+	if(tag.tag_type == TAG_INVALID)
+		CRASH("Tag '[split_tag.Join("")]' was recognized, but did not become a valid tag. This is a bug in the template engine.")
+	return tag
 
 /datum/html_template_tag
+	var/tag_type = TAG_INVALID
+	var/parameters = list()
 
-
+/datum/html_template_tag/proc/parse_selector(split_tag, start, is_index = FALSE)
+	var/next = start
+	var/datum/html_template_selector/selector = new()
+	while(next <= length(split_tag))
+		switch(split_tag[next])
+			if(" ")
+				if(is_index)
+					CRASH("Index selector not closed.")
+				break
+			if("]")
+				if(!is_index)
+					CRASH("Index selector closed when none was open.")
+				break
+			if(".")
+				assert(length(split_tag) >= next + 1)
+				assert(SShtml_templates.name_matcher.Find(split_tag[next + 1]) == 1)
+				selector.add_piece(SELECTOR_VAR, split_tag[next + 1])
+				next += 2
+			if(":")
+				assert(length(split_tag) >= next + 1)
+				switch(split_tag[next + 1])
+					if("name")
+						selector.add_piece(SELECTOR_MODIFIER, MODIFIER_NAME)
+					if("ref")
+						selector.add_piece(SELECTOR_MODIFIER, MODIFIER_REF)
+					if("literal")
+						selector.add_piece(SELECTOR_MODIFIER, MODIFIER_LITERAL)
+					if("pencode")
+						selector.add_piece(SELECTOR_MODIFIER, MODIFIER_PENCODE)
+					if("admin_pencode")
+						selector.add_piece(SELECTOR_MODIFIER, MODIFIER_ADMIN_PENCODE)
+					else
+						CRASH("Invalid modifier '[split_tag[next + 1]]'")
+				next += 2
+			if(
 
 /datum/html_template_tag/New(raw)
 
