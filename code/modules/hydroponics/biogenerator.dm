@@ -117,6 +117,9 @@
 		to_chat(user, "<span class='warning'>[src] is currently processing.</span>")
 		return ITEM_INTERACT_COMPLETE
 
+	if(default_unfasten_wrench(user, used, time = 4 SECONDS))
+		return ITEM_INTERACT_COMPLETE
+
 	if(istype(used, /obj/item/reagent_containers/glass))
 		if(panel_open)
 			to_chat(user, "<span class='warning'>Close the maintenance panel first.</span>")
@@ -213,6 +216,9 @@
 /obj/machinery/biogenerator/attack_hand(mob/user)
 	if(..())
 		return
+	if(!anchored)
+		to_chat(user, "<span class='warning'>[src] is not stable enough to use, secure it to the floor first!</span>")
+
 	ui_interact(user)
 
 /obj/machinery/biogenerator/attack_ghost(mob/user)
@@ -249,6 +255,9 @@
 /obj/machinery/biogenerator/ui_act(action, list/params)
 	if(..())
 		return
+
+	if(!anchored)
+		to_chat(user, "<span class='warning'>[src] is not stable enough to use, secure it to the floor first!</span>")
 
 	. = TRUE
 	switch(action)

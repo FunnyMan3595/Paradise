@@ -191,10 +191,10 @@
 	return TRUE
 
 /obj/proc/default_unfasten_wrench(mob/user, obj/item/I, time = 20)
+	if(I.tool_behaviour != TOOL_WRENCH)
+		return FALSE
 	if(!anchored && !isfloorturf(loc))
 		user.visible_message("<span class='warning'>A floor must be present to secure [src]!</span>")
-		return FALSE
-	if(I.tool_behaviour != TOOL_WRENCH)
 		return FALSE
 	if(!I.tool_use_check(user, 0))
 		return FALSE
